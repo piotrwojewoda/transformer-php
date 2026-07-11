@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Transformer PHP{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+    <header class="bg-white shadow">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="{{ path('dashboard') }}" class="text-xl font-bold text-blue-600">Transformer PHP</a>
+            <nav class="flex gap-6 text-sm">
+                <a href="{{ path('dashboard') }}" class="hover:text-blue-600">Dashboard</a>
+                <a href="{{ path('corpus_new') }}" class="hover:text-blue-600">Ingest</a>
+                <a href="{{ path('model_list') }}" class="hover:text-blue-600">Models</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="mb-4 px-4 py-3 rounded bg-{{ label == 'error' ? 'red' : 'green' }}-100 border border-{{ label == 'error' ? 'red' : 'green' }}-300 text-{{ label == 'error' ? 'red' : 'green' }}-800">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {% block body %}{% endblock %}
+    </main>
+</body>
+</html>

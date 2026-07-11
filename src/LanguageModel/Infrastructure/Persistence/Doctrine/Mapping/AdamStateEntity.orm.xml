@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                                      https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <entity name="App\LanguageModel\Infrastructure\Persistence\Doctrine\Entity\AdamStateEntity" table="adam_state">
+        <id name="modelId" type="integer" column="model_id"/>
+        <id name="path" type="string" length="100" column="param_path"/>
+        <id name="row" type="integer" column="row_idx"/>
+        <id name="col" type="integer" column="col_idx"/>
+        <field name="m" type="float"/>
+        <field name="v" type="float"/>
+    </entity>
+</doctrine-mapping>

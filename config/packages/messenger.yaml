@@ -1,0 +1,54 @@
+framework:
+    messenger:
+        failure_transport: failed
+
+        default_bus: command.bus
+
+        buses:
+            command.bus:
+                middleware:
+                    - doctrine_transaction
+                    - dispatch_after_current_bus
+                    - App\Shared\Infrastructure\Messenger\EventRecordingMiddleware
+            query.bus: ~
+
+        transports:
+            async_training:
+                dsn: 'doctrine://default?queue_name=training'
+                options:
+                    auto_setup: true
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 10000
+
+            async_inference:
+                dsn: 'doctrine://default?queue_name=inference'
+                options:
+                    auto_setup: true
+                retry_strategy:
+                    max_retries: 2
+                    delay: 500
+                    multiplier: 2
+                    max_delay: 5000
+
+            failed:
+                dsn: 'doctrine://default?queue_name=failed'
+                options:
+                    auto_setup: true
+
+        routing:
+            App\LanguageModel\Infrastructure\Messenger\Message\TrainModelMessage: async_training
+            App\LanguageModel\Infrastructure\Messenger\Message\GeneratePredictionMessage: async_inference
+
+when@test:
+    framework:
+        messenger:
+            transports:
+                async_training: 'in-memory://'
+                async_inference: 'in-memory://'
+                failed: 'in-memory://'
+            routing:
+                App\LanguageModel\Infrastructure\Messenger\Message\TrainModelMessage: async_training
+                App\LanguageModel\Infrastructure\Messenger\Message\GeneratePredictionMessage: async_inference

@@ -1,0 +1,5 @@
+
+services:
+  mariadb:
+    ports:
+      - "3306"

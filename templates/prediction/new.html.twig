@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New prediction{% endblock %}
+
+{% block body %}
+    <h1 class="text-2xl font-bold mb-6">Generate prediction</h1>
+
+    {{ form_start(form, {'attr': {'class': 'space-y-4 bg-white p-6 rounded shadow'}}) }}
+        {{ form_row(form.modelId) }}
+        {{ form_row(form.prompt) }}
+        <div class="grid grid-cols-3 gap-4">
+            {{ form_row(form.strategy) }}
+            {{ form_row(form.maxNewTokens) }}
+            {{ form_row(form.topK) }}
+        </div>
+        <div>
+            {{ form_widget(form.generate, {'attr': {'class': 'px-4 py-2 bg-blue-600 text-white rounded'}}) }}
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

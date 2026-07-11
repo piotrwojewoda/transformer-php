@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                                      https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <entity name="App\LanguageModel\Infrastructure\Persistence\Doctrine\Entity\LanguageModelEntity" table="language_models">
+        <id name="id" type="bigint" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="uuid" type="string" length="36" unique="true"/>
+        <field name="name" type="string" length="120"/>
+        <field name="dModel" type="smallint" column="d_model"/>
+        <field name="numHeads" type="smallint" column="num_heads"/>
+        <field name="numLayers" type="smallint" column="num_layers"/>
+        <field name="dFf" type="smallint" column="d_ff"/>
+        <field name="maxSeqLen" type="smallint" column="max_seq_len"/>
+        <field name="vocabSize" type="smallint" column="vocab_size"/>
+        <field name="status" type="string" length="16"/>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+        <field name="updatedAt" type="datetime_immutable" column="updated_at"/>
+    </entity>
+</doctrine-mapping>

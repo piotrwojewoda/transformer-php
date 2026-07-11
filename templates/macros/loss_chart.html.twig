@@ -1,0 +1,28 @@
+{# Inline SVG loss chart (no JS) #}
+{% macro sparkline(points, width, height) %}
+    {% set n = points|length %}
+    {% if n < 2 %}
+        <p class="text-gray-500 text-xs">Not enough data points for a chart yet.</p>
+    {% else %}
+        {% set maxLoss = 0 %}
+        {% set minLoss = 999999 %}
+        {% for p in points %}
+            {% if p.loss > maxLoss %}{% set maxLoss = p.loss %}{% endif %}
+            {% if p.loss < minLoss %}{% set minLoss = p.loss %}{% endif %}
+        {% endfor %}
+        {% set range = maxLoss - minLoss %}
+        {% if range == 0 %}{% set range = 1 %}{% endif %}
+        {% set stepX = (width - 40) / (n - 1) %}
+        {% set polyline = '' %}
+        {% for p in points %}
+            {% set x = 20 + loop.index0 * stepX %}
+            {% set y = 20 + (1 - (p.loss - minLoss) / range) * (height - 40) %}
+            {% set polyline = polyline ~ x ~ ',' ~ y ~ ' ' %}
+        {% endfor %}
+        <svg width="{{ width }}" height="{{ height }}" class="border rounded bg-gray-50">
+            <polyline points="{{ polyline|trim }}" fill="none" stroke="#2563eb" stroke-width="2" />
+            <text x="10" y="15" font-size="10" fill="#6b7280">{{ '%.4f'|format(maxLoss) }}</text>
+            <text x="10" y="{{ height - 5 }}" font-size="10" fill="#6b7280">{{ '%.4f'|format(minLoss) }}</text>
+        </svg>
+    {% endif %}
+{% endmacro %}

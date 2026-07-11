@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: transformer
+          MARIADB_USER: transformer
+          MARIADB_PASSWORD: transformer
+        ports:
+          - "3306:3306"
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.5
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_mysql, intl, opcache, zip, mbstring
+          coverage: pcov
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php8.5-${{ hashFiles('composer.json') }}
+          restore-keys: ${{ runner.os }}-php8.5-
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist
+
+      - name: Run unit tests
+        run: vendor/bin/phpunit --testsuite unit
+
+      - name: Run integration tests
+        run: vendor/bin/phpunit --testsuite integration
+        env:
+          DATABASE_URL: "mysql://transformer:transformer@127.0.0.1:3306/transformer_test?serverVersion=11.4&charset=utf8mb4"
+
+      - name: Run functional tests
+        run: vendor/bin/phpunit --testsuite functional
+        env:
+          DATABASE_URL: "mysql://transformer:transformer@127.0.0.1:3306/transformer_test?serverVersion=11.4&charset=utf8mb4"
+
+      - name: Run coverage
+        run: vendor/bin/phpunit --coverage-clover=var/coverage/clover.xml
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress

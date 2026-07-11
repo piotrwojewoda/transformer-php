@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                                      https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <entity name="App\LanguageModel\Infrastructure\Persistence\Doctrine\Entity\TrainingJobEntity" table="training_jobs">
+        <id name="id" type="bigint" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="uuid" type="string" length="36" unique="true"/>
+        <field name="modelId" type="integer" column="model_id"/>
+        <field name="status" type="string" length="16"/>
+        <field name="totalEpochs" type="integer" column="total_epochs"/>
+        <field name="learningRate" type="float" column="learning_rate"/>
+        <field name="seqLen" type="integer" column="seq_len"/>
+        <field name="batchSize" type="integer" column="batch_size"/>
+        <field name="epoch" type="integer"/>
+        <field name="loss" type="float" nullable="true"/>
+        <field name="startedAt" type="datetime_immutable" column="started_at" nullable="true"/>
+        <field name="finishedAt" type="datetime_immutable" column="finished_at" nullable="true"/>
+        <field name="errorMessage" type="text" column="error_message" nullable="true"/>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+    </entity>
+</doctrine-mapping>

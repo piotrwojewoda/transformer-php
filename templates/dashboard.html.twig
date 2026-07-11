@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard — Transformer PHP{% endblock %}
+
+{% block body %}
+    <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white p-6 rounded shadow">
+            <div class="text-sm text-gray-500">Corpora</div>
+            <div class="text-3xl font-bold">{{ corpusCount }}</div>
+        </div>
+        <div class="bg-white p-6 rounded shadow">
+            <div class="text-sm text-gray-500">Models</div>
+            <div class="text-3xl font-bold">{{ modelCount }}</div>
+        </div>
+        <div class="bg-white p-6 rounded shadow">
+            <div class="text-sm text-gray-500">Predictions</div>
+            <div class="text-3xl font-bold">{{ predictionCount }}</div>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-xl font-semibold mb-4">Quick actions</h2>
+        <ul class="space-y-2 text-sm">
+            <li><a href="{{ path('corpus_new') }}" class="text-blue-600 hover:underline">+ Ingest a new corpus</a></li>
+            <li><a href="{{ path('model_new') }}" class="text-blue-600 hover:underline">+ Create a new model</a></li>
+            <li><a href="{{ path('model_list') }}" class="text-blue-600 hover:underline">List existing models</a></li>
+        </ul>
+    </div>
+{% endblock %}

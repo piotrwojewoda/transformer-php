@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Prediction — {{ prediction.id }}{% endblock %}
+
+{% block body %}
+    {% if not prediction.isDone() %}
+        <meta http-equiv="refresh" content="1">
+    {% endif %}
+
+    <h1 class="text-2xl font-bold mb-6">Prediction</h1>
+
+    <div class="bg-white p-6 rounded shadow mb-4">
+        <dl class="text-sm space-y-2">
+            <div class="flex justify-between"><dt class="text-gray-500">Status</dt><dd>
+                <span class="px-2 py-1 rounded text-xs
+                    {{ prediction.status == 'done' ? 'bg-green-100 text-green-800' : '' }}
+                    {{ prediction.status == 'failed' ? 'bg-red-100 text-red-800' : '' }}
+                    {{ prediction.status in ['queued','running'] ? 'bg-yellow-100 text-yellow-800' : '' }}">
+                    {{ prediction.status }}
+                </span>
+            </dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Model</dt><dd><code class="text-xs">{{ prediction.modelId }}</code></dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">Sampling</dt><dd>{{ prediction.samplingStrategy }} · max_new_tokens={{ prediction.maxNewTokens }}{{ prediction.topK is not null ? ' · top_k=' ~ prediction.topK }}</dd></div>
+        </dl>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow mb-4">
+        <h2 class="text-sm font-semibold text-gray-500 mb-1">Prompt</h2>
+        <pre class="whitespace-pre-wrap break-words">{{ prediction.prompt }}</pre>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-sm font-semibold text-gray-500 mb-1">Generated text</h2>
+        {% if prediction.generatedText is not null %}
+            <pre class="whitespace-pre-wrap break-words">{{ prediction.generatedText }}</pre>
+        {% elseif prediction.status == 'failed' %}
+            <p class="text-red-700 text-sm">Error: {{ prediction.errorMessage }}</p>
+        {% else %}
+            <p class="text-gray-400">Generating…</p>
+        {% endif %}
+    </div>
+{% endblock %}

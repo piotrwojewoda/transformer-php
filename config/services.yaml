@@ -1,0 +1,62 @@
+parameters:
+    app.d_model_default: 8
+    app.num_heads_default: 1
+    app.num_layers_default: 1
+    app.d_ff_default: 16
+    app.max_seq_len_default: 32
+    app.learning_rate_default: 0.005
+    app.total_epochs_default: 50
+    app.seq_len_default: 32
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/LanguageModel/Domain/'
+            - '../src/LanguageModel/Application/Port/'
+
+    App\Shared\Domain\DomainEventCollector:
+        public: false
+
+    App\Shared\Infrastructure\Clock\SystemClock:
+        public: false
+
+    App\Shared\Domain\Clock:
+        alias: App\Shared\Infrastructure\Clock\SystemClock
+
+    App\LanguageModel\Application\Port\TokenizerPort:
+        alias: App\LanguageModel\Infrastructure\Tokenizer\CharacterTokenizer
+
+    App\LanguageModel\Application\Port\TrainerPort:
+        alias: App\LanguageModel\Infrastructure\Transformer\ModelTrainer
+
+    App\LanguageModel\Application\Port\PredictorPort:
+        alias: App\LanguageModel\Infrastructure\Transformer\ModelPredictor
+
+    App\LanguageModel\Domain\Repository\LanguageModelRepository:
+        alias: App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository\DoctrineLanguageModelRepository
+
+    App\LanguageModel\Domain\Repository\CorpusRepository:
+        alias: App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository\DoctrineCorpusRepository
+
+    App\LanguageModel\Domain\Repository\VocabularyRepository:
+        alias: App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository\DoctrineVocabularyRepository
+
+    App\LanguageModel\Domain\Repository\TrainingJobRepository:
+        alias: App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository\DoctrineTrainingJobRepository
+
+    App\LanguageModel\Domain\Repository\PredictionRepository:
+        alias: App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository\DoctrinePredictionRepository
+
+    App\LanguageModel\Domain\Repository\AdamStateRepository:
+        alias: App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository\DoctrineAdamStateRepository
+
+    App\LanguageModel\Infrastructure\Transformer\RandomGenerator:
+        arguments:
+            $seed: 42

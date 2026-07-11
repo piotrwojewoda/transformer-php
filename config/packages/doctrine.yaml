@@ -1,0 +1,45 @@
+doctrine:
+    dbal:
+        url: '%env(resolve:DATABASE_URL)%'
+        charset: utf8mb4
+        default_table_options:
+            charset: utf8mb4
+            collation: utf8mb4_unicode_ci
+
+    orm:
+        validate_xml_mapping: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        auto_mapping: true
+        controller_resolver:
+            auto_mapping: false
+        mappings:
+            App:
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/LanguageModel/Infrastructure/Persistence/Doctrine/Mapping'
+                prefix: 'App\LanguageModel\Infrastructure\Persistence\Doctrine\Entity'
+                type: xml
+                alias: App
+
+when@test:
+    doctrine:
+        dbal:
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

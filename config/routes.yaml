@@ -1,0 +1,5 @@
+controllers:
+    resource:
+        path: ../src/LanguageModel/HttpInterface/Controller/
+        namespace: App\LanguageModel\HttpInterface\Controller
+    type: attribute

@@ -1,0 +1,37 @@
+services:
+  php:
+    build: ./docker/php
+    volumes:
+      - ./:/app
+      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+    ports:
+      - "8080:80"
+    environment:
+      XDEBUG_CONFIG: "client_host=host.docker.internal client_port=9003"
+      PHP_IDE_CONFIG: "serverName=transformer-app"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  mariadb:
+    image: mariadb:11.4
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: transformer
+      MARIADB_USER: transformer
+      MARIADB_PASSWORD: transformer
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./docker/mariadb/conf.d:/etc/mysql/conf.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  dbdata:

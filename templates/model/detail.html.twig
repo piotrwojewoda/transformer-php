@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Model — {{ model.name }}{% endblock %}
+
+{% block body %}
+    <h1 class="text-2xl font-bold mb-2">{{ model.name }}</h1>
+    <p class="text-sm text-gray-600 mb-6">UUID: <code>{{ model.id }}</code> · {{ model.totalWeightRows() }} weight rows</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="text-lg font-semibold mb-3">Configuration</h2>
+            <dl class="text-sm space-y-1">
+                <div class="flex justify-between"><dt>Status</dt><dd><span class="px-2 py-1 rounded text-xs bg-gray-100">{{ model.status.value }}</span></dd></div>
+                <div class="flex justify-between"><dt>dModel</dt><dd>{{ model.dModel }}</dd></div>
+                <div class="flex justify-between"><dt>numHeads</dt><dd>{{ model.numHeads }}</dd></div>
+                <div class="flex justify-between"><dt>numLayers</dt><dd>{{ model.numLayers }}</dd></div>
+                <div class="flex justify-between"><dt>dFf</dt><dd>{{ model.dFf }}</dd></div>
+                <div class="flex justify-between"><dt>maxSeqLen</dt><dd>{{ model.maxSeqLen }}</dd></div>
+                <div class="flex justify-between"><dt>vocabSize</dt><dd>{{ model.vocabSize }}</dd></div>
+            </dl>
+        </div>
+
+        <div class="bg-white p-6 rounded shadow">
+            <h2 class="text-lg font-semibold mb-3">Actions</h2>
+            <form action="{{ path('model_train_one', {id: model.id}) }}" method="post" class="mb-3">
+                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded">Train 1 epoch</button>
+            </form>
+            <form action="{{ path('model_train_n', {id: model.id}) }}" method="post" class="flex gap-2">
+                <input type="number" name="n" min="1" max="500" value="10" class="flex-1 px-3 py-2 border rounded">
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded">Train N epochs</button>
+            </form>
+            <a href="{{ path('prediction_new', {model: model.id}) }}" class="block mt-4 text-center px-4 py-2 bg-purple-600 text-white rounded">Generate prediction</a>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-lg font-semibold mb-3">Training history</h2>
+        {% if history is null %}
+            <p class="text-gray-600 text-sm">No training has been queued for this model.</p>
+        {% else %}
+            <p class="text-sm mb-2">Epoch {{ history.currentEpoch }} of {{ history.totalEpochs }} — last loss:
+                <strong>{{ history.lastLoss is not null ? history.lastLoss|number_format(4) : '—' }}</strong>
+            </p>
+
+            {% if history.points|length > 0 %}
+                {% import 'macros/loss_chart.html.twig' as lossChart %}
+                {{ lossChart.sparkline(history.points, 400, 120) }}
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
