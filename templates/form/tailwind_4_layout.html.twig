@@ -1,0 +1,161 @@
+{# Tailwind CSS form theme for Symfony Forms #}
+
+{# Form row #}
+{%- block form_row -%}
+    {%- set row_attr = row_attr|default({})|merge({'class': (row_attr.class|default('') ~ ' mb-4')|trim}) -%}
+    <div{% with {attr: row_attr} %}{{ block('attributes') }}{% endwith %}>
+        {{- form_label(form, null, {'label_attr': {'class': 'block text-sm font-medium text-gray-700 mb-1'}}) -}}
+        {{- form_widget(form, {'attr': {'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border'}}) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock form_row -%}
+
+{# Text input #}
+{%- block text_widget -%}
+    {%- set type = type|default('text') -%}
+    {{ block('form_widget_simple') }}
+{%- endblock text_widget -%}
+
+{# Integer input #}
+{%- block integer_widget -%}
+    {%- set type = type|default('number') -%}
+    {{ block('form_widget_simple') }}
+{%- endblock integer_widget -%}
+
+{# Number input #}
+{%- block number_widget -%}
+    {%- set type = type|default('number') -%}
+    {{ block('form_widget_simple') }}
+{%- endblock number_widget -%}
+
+{# Simple form widget #}
+{%- block form_widget_simple -%}
+    {%- set attr = attr|default({})|merge({'class': (attr.class|default('') ~ ' w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border')|trim}) -%}
+    <input type="{{ type|default('text') }}" {{ block('widget_attributes') }}{% if value is not empty %} value="{{ value }}"{% endif %}>
+{%- endblock form_widget_simple -%}
+
+{# Textarea #}
+{%- block textarea_widget -%}
+    {%- set attr = attr|default({})|merge({'class': (attr.class|default('') ~ ' w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border')|trim}) -%}
+    <textarea {{ block('widget_attributes') }}>{{ value }}</textarea>
+{%- endblock textarea_widget -%}
+
+{# Choice (select) #}
+{%- block choice_widget -%}
+    {%- if expanded is defined and expanded -%}
+        {{ block('choice_widget_expanded') }}
+    {%- else -%}
+        {%- set attr = attr|default({})|merge({'class': (attr.class|default('') ~ ' w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border')|trim}) -%}
+        <select {{ block('widget_attributes') }}{% if multiple %} multiple{% endif %}>
+            {%- if placeholder is defined -%}
+                <option value=""{% if placeholder_translation_domain is defined %} data-translation-domain="{{ placeholder_translation_domain }}"{% endif %}>{{ placeholder }}</option>
+            {%- endif -%}
+            {%- if preferred_choices|length > 0 -%}
+                {{ block('choice_widget_options') }}
+                {%- if choices|length > 0 and separator is not none -%}
+                    <option disabled="disabled">{{ separator }}</option>
+                {%- endif -%}
+            {%- endif -%}
+            {%- set options = choices -%}
+            {{ block('choice_widget_options') }}
+        </select>
+    {%- endif -%}
+{%- endblock choice_widget -%}
+
+{# Submit button #}
+{%- block submit_widget -%}
+    {%- set attr = attr|default({})|merge({'class': (attr.class|default('') ~ ' w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium')|trim}) -%}
+    <button type="submit" {{ block('button_attributes') }}>{{ label|default('Submit') }}</button>
+{%- endblock submit_widget -%}
+
+{# Form errors #}
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <div class="mt-1">
+            {%- for error in errors -%}
+                <p class="text-sm text-red-600">{{ error.message }}</p>
+            {%- endfor -%}
+        </div>
+    {%- endif -%}
+{%- endblock form_errors -%}
+
+{# Form label #}
+{%- block form_label -%}
+    {%- if label is not same as(false) -%}
+        {%- if label is empty -%}
+            {%- set label = name|humanize -%}
+        {%- endif -%}
+        {%- set label_attr = label_attr|default({}) -%}
+        {%- set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' block text-sm font-medium text-gray-700 mb-1')|trim}) -%}
+        {% if required -%}
+            {%- set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' required')|trim}) -%}
+        {%- endif -%}
+        <label for="{{ id }}"{% with {attr: label_attr} %}{{ block('attributes') }}{% endwith %}>
+            {{- label|trans(label_translation_parameters, translation_domain) -}}
+            {%- if required -%}<span class="text-red-500 ml-0.5">*</span>{%- endif -%}
+            {%- if tooltip is defined and tooltip is not empty -%}
+            <span class="info-tooltip relative inline-flex ml-1 cursor-help align-middle">
+                <svg class="w-4 h-4 text-gray-400 hover:text-blue-600 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clip-rule="evenodd"/>
+                </svg>
+                <span class="info-tooltip-bubble hidden absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-3 text-xs text-gray-700 bg-white border border-gray-200 rounded-lg shadow-lg leading-relaxed text-left">
+                    {{ tooltip|trans }}
+                </span>
+            </span>
+            {%- endif -%}
+        </label>
+    {%- endif -%}
+{%- endblock form_label -%}
+
+{# Widget attributes #}
+{%- block widget_attributes -%}
+    id="{{ id }}" name="{{ full_name }}"
+    {%- if disabled %} disabled="disabled"{% endif -%}
+    {%- if required %} required="required"{% endif -%}
+    {%- for attrname, attrvalue in attr -%}
+        {{- ' ' -}}
+        {%- if attrname in ['placeholder', 'title'] -%}
+            {{- attrname }}="{{ attrvalue|trans(attr_translation_parameters, translation_domain) }}"
+        {%- elseif attrvalue is same as(true) -%}
+            {{- attrname }}="{{ attrname }}"
+        {%- elseif attrvalue is not same as(false) -%}
+            {{- attrname }}="{{ attrvalue }}"
+        {%- endif -%}
+    {%- endfor -%}
+{%- endblock widget_attributes -%}
+
+{# Generic attributes #}
+{%- block attributes -%}
+    {%- for attrname, attrvalue in attr -%}
+        {{- ' ' -}}
+        {%- if attrname in ['placeholder', 'title'] -%}
+            {{- attrname }}="{{ attrvalue|trans(attr_translation_parameters, translation_domain) }}"
+        {%- elseif attrvalue is same as(true) -%}
+            {{- attrname }}="{{ attrname }}"
+        {%- elseif attrvalue is not same as(false) -%}
+            {%- if attrvalue is iterable -%}
+                {{- attrname }}="{{ attrvalue|filter(v => v is not same as(false))|join(' ') }}"
+            {%- else -%}
+                {{- attrname }}="{{ attrvalue }}"
+            {%- endif -%}
+        {%- endif -%}
+    {%- endfor -%}
+{%- endblock attributes -%}
+
+{# Button #}
+{%- block button -%}
+    {%- set attr = attr|default({})|merge({'class': (attr.class|default('') ~ ' px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm font-medium')|trim}) -%}
+    <button type="{{ type|default('button') }}" {{ block('button_attributes') }}>{{ label|default('Button') }}</button>
+{%- endblock button -%}
+
+{# Checkbox #}
+{%- block checkbox_widget -%}
+    {%- set attr = attr|default({})|merge({'class': (attr.class|default('') ~ ' rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500')|trim}) -%}
+    <input type="checkbox" {{ block('widget_attributes') }}{% if checked %} checked="checked"{% endif %}>
+{%- endblock checkbox_widget -%}
+
+{# Radio #}
+{%- block radio_widget -%}
+    {%- set attr = attr|default({})|merge({'class': (attr.class|default('') ~ ' border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500')|trim}) -%}
+    <input type="radio" {{ block('widget_attributes') }}{% if checked %} checked="checked"{% endif %}>
+{%- endblock radio_widget -%}

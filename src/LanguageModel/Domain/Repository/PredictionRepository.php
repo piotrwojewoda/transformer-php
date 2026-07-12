@@ -24,4 +24,11 @@ interface PredictionRepository
      * @return list<Prediction>
      */
     public function findByModel(ModelId $modelId, int $limit = 20): array;
+
+    /**
+     * Get every prediction in the database, newest first.
+     *
+     * @return list<Prediction>
+     */
+    public function all(): array;
 }

@@ -7,6 +7,7 @@ namespace App\LanguageModel\HttpInterface\Controller;
 use App\LanguageModel\Application\Command\GeneratePredictionCommand;
 use App\LanguageModel\Application\Query\GetModelQuery;
 use App\LanguageModel\Application\Query\GetPredictionQuery;
+use App\LanguageModel\Application\Query\ListPredictionsQuery;
 use App\LanguageModel\Domain\Inference\SamplingConfig;
 use App\LanguageModel\Domain\Inference\SamplingStrategy;
 use App\LanguageModel\Domain\Inference\PredictionId;
@@ -68,6 +69,19 @@ final readonly class PredictionController
 
         return new Response($this->twig->render('prediction/new.html.twig', [
             'form' => $form->createView(),
+        ]));
+    }
+
+    /**
+     * Show a list of every prediction in the system.
+     */
+    #[Route('/prediction', name: 'prediction_list', methods: ['GET'])]
+    public function list(): Response
+    {
+        $predictions = $this->queryBus->dispatch(new ListPredictionsQuery())->last(HandledStamp::class)->getResult();
+
+        return new Response($this->twig->render('prediction/list.html.twig', [
+            'predictions' => $predictions,
         ]));
     }
 

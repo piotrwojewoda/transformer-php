@@ -23,37 +23,45 @@ final readonly class DoctrineAdamStateRepository implements AdamStateRepository
     public function saveState(ModelId $modelId, array $state): void
     {
         $internal = $this->resolveModelId($modelId);
-        // Wipe and rewrite. Wipe is faster than a per-row UPSERT
-        // because most epochs touch most weights.
-        $this->em->wrapInTransaction(function () use ($internal, $state) {
-            $this->em->getConnection()->executeStatement('DELETE FROM adam_state WHERE model_id = ?', [$internal]);
-            foreach ($state as $key => $row) {
-                // Keys look like "path:row:col" (the last two are
-                // separated by colons; the path itself can also
-                // contain colons, so we split from the right).
-                [$path, $r, $c] = $this->unpackKey($key);
-                $e = new AdamStateEntity();
-                $e->modelId = $internal;
-                $e->path = $path;
-                $e->row = $r;
-                $e->col = $c;
-                $e->m = $row['m'] ?? 0.0;
-                $e->v = $row['v'] ?? 0.0;
-                $this->em->persist($e);
+        $conn = $this->em->getConnection();
+        $this->em->clear(AdamStateEntity::class);
+        $conn->executeStatement('DELETE FROM adam_state WHERE model_id = ?', [$internal]);
+
+        $batchSize = 500;
+        $params = [];
+        $placeholders = [];
+        $i = 0;
+        foreach ($state as $key => $row) {
+            $params[] = $internal;
+            $params[] = $key;
+            $params[] = 0;
+            $params[] = 0;
+            $params[] = $row['m'] ?? 0.0;
+            $params[] = $row['v'] ?? 0.0;
+            $placeholders[] = '(?,?,?,?,?,?)';
+            $i++;
+            if ($i % $batchSize === 0) {
+                $conn->executeStatement('INSERT IGNORE INTO adam_state (model_id, param_path, row_idx, col_idx, m, v) VALUES ' . \implode(',', $placeholders), $params);
+                $params = [];
+                $placeholders = [];
             }
-            $this->em->flush();
-        });
+        }
+        if ($placeholders !== []) {
+            $conn->executeStatement('INSERT IGNORE INTO adam_state (model_id, param_path, row_idx, col_idx, m, v) VALUES ' . \implode(',', $placeholders), $params);
+        }
     }
 
     public function loadState(ModelId $modelId): array
     {
         $internal = $this->resolveModelId($modelId);
-        $entities = $this->em->getRepository(AdamStateEntity::class)->findBy(['modelId' => $internal]);
+        $conn = $this->em->getConnection();
         $out = [];
-        foreach ($entities as $e) {
-            // Recombine the (path, row, col) into the key the
-            // Adam optimizer uses.
-            $out["{$e->path}:{$e->row}:{$e->col}"] = ['m' => $e->m, 'v' => $e->v];
+        $stmt = $conn->executeQuery(
+            'SELECT param_path, m, v FROM adam_state WHERE model_id = ? ORDER BY param_path',
+            [$internal],
+        );
+        while ($row = $stmt->fetchAssociative()) {
+            $out[$row['param_path']] = ['m' => (float) $row['m'], 'v' => (float) $row['v']];
         }
 
         return $out;
@@ -84,17 +92,25 @@ final readonly class DoctrineAdamStateRepository implements AdamStateRepository
 
     /**
      * Unpack a key like "attn.0.wq:3:7" into (path, row, col).
-     * We split on ":" from the right because the path itself may
-     // contain colons (rare, but possible).
+     *
+     * For 1D entries the key looks like "path:index" (1 colon).
+     * For 2D entries the key looks like "path:row:col" (2 colons).
+     * The path itself may contain colons, so we split from the right.
      *
      * @return array{0: string, 1: int, 2: int}
      */
     private function unpackKey(string $key): array
     {
         $parts = \explode(':', $key);
-        if (\count($parts) < 3) {
+        $n = \count($parts);
+        if ($n === 1) {
             return [$key, 0, 0];
         }
+        if ($n === 2) {
+            // 1D entry: key = "path:row"
+            return [$parts[0], (int) $parts[1], 0];
+        }
+        // 2D entry: key = "path:row:col" (path may have extra colons)
         $col = (int) array_pop($parts);
         $row = (int) array_pop($parts);
         $path = \implode(':', $parts);

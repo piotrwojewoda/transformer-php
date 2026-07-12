@@ -41,7 +41,7 @@ final readonly class DashboardController
             // findByModel returns [] for a non-existent model,
             // which gives us a quick "0 jobs" count.
             'trainingJobCount' => \count($this->jobs->findByModel(new \App\LanguageModel\Domain\Model\ModelId('00000000-0000-0000-0000-000000000000'))),
-            'predictionCount' => 0,
+            'predictionCount' => \count($this->predictions->all()),
         ];
 
         return new Response($this->twig->render('dashboard.html.twig', $data));

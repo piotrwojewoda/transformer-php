@@ -2,7 +2,7 @@
 {% macro sparkline(points, width, height) %}
     {% set n = points|length %}
     {% if n < 2 %}
-        <p class="text-gray-500 text-xs">Not enough data points for a chart yet.</p>
+        <p class="text-gray-500 text-xs">{{ 'prediction.not_enough_data'|trans }}</p>
     {% else %}
         {% set maxLoss = 0 %}
         {% set minLoss = 999999 %}

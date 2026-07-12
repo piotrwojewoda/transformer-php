@@ -101,116 +101,121 @@ final readonly class DoctrineLanguageModelRepository implements LanguageModelRep
         }
         $modelId = (int) $entity->id;
 
-        // wrapInTransaction makes the whole thing atomic:
-        // either every row is updated, or nothing is. We also
-        // DELETE the old rows first because the new ones might
-        // have different shapes (e.g. different vocab size).
-        $this->em->wrapInTransaction(function () use ($modelId, $weights) {
-            $this->em->getConnection()->executeStatement('DELETE FROM model_token_embeddings WHERE model_id = ?', [$modelId]);
-            $this->em->getConnection()->executeStatement('DELETE FROM model_positional_embeddings WHERE model_id = ?', [$modelId]);
-            $this->em->getConnection()->executeStatement('DELETE FROM model_attention_weights WHERE model_id = ?', [$modelId]);
-            $this->em->getConnection()->executeStatement('DELETE FROM model_ffn_weights WHERE model_id = ?', [$modelId]);
-            $this->em->getConnection()->executeStatement('DELETE FROM model_final_projection WHERE model_id = ?', [$modelId]);
-            $this->em->getConnection()->executeStatement('DELETE FROM model_layer_norms WHERE model_id = ?', [$modelId]);
+        // Use raw SQL INSERT batching instead of Doctrine persist
+        // to avoid OOM from 8M+ entity objects in UnitOfWork.
+        //
+        // Rows are flushed in batches of batchSize so that only
+        // batchSize rows are held in PHP memory at any time.
+        $conn = $this->em->getConnection();
+        $this->em->wrapInTransaction(function () use ($conn, $modelId, $weights) {
+            $conn->executeStatement('DELETE FROM model_token_embeddings WHERE model_id = ?', [$modelId]);
+            $conn->executeStatement('DELETE FROM model_positional_embeddings WHERE model_id = ?', [$modelId]);
+            $conn->executeStatement('DELETE FROM model_attention_weights WHERE model_id = ?', [$modelId]);
+            $conn->executeStatement('DELETE FROM model_ffn_weights WHERE model_id = ?', [$modelId]);
+            $conn->executeStatement('DELETE FROM model_final_projection WHERE model_id = ?', [$modelId]);
+            $conn->executeStatement('DELETE FROM model_layer_norms WHERE model_id = ?', [$modelId]);
 
             $data = $weights->data;
+            $batchSize = 500;
+
+            // Accepts a buffer of rows by reference, builds one
+            // INSERT with all of them, then resets the buffer.
+            $flushBuffer = function (array &$buffer, string $table, array $columns) use ($conn): void {
+                $n = \count($buffer);
+                if ($n === 0) {
+                    return;
+                }
+                $placeholders = [];
+                $params = [];
+                foreach ($buffer as $row) {
+                    $ph = [];
+                    foreach ($columns as $c) {
+                        $ph[] = '?';
+                        $params[] = $row[$c];
+                    }
+                    $placeholders[] = '(' . \implode(',', $ph) . ')';
+                }
+                $sql = 'INSERT INTO ' . $table . ' (' . \implode(',', $columns) . ') VALUES ' . \implode(',', $placeholders);
+                $conn->executeStatement($sql, $params);
+                $buffer = [];
+            };
+
+            // Helper: add a single row to the buffer and flush when full.
+            $add = function (array &$buffer, string $table, array $columns, array $row) use ($batchSize, $flushBuffer): void {
+                $buffer[] = $row;
+                if (\count($buffer) >= $batchSize) {
+                    $flushBuffer($buffer, $table, $columns);
+                }
+            };
 
             // Token embeddings: one row per (tokenId, dim).
+            $buf = [];
             foreach ($data['tokenEmbed'] ?? [] as $tokId => $row) {
                 foreach ($row as $dim => $value) {
-                    $e = new ModelTokenEmbeddingEntity();
-                    $e->modelId = $modelId;
-                    $e->tokenId = (int) $tokId;
-                    $e->dim = (int) $dim;
-                    $e->value = (float) $value;
-                    $this->em->persist($e);
+                    $add($buf, 'model_token_embeddings', ['model_id', 'token_id', 'dim', 'value'], ['model_id' => $modelId, 'token_id' => (int) $tokId, 'dim' => (int) $dim, 'value' => (float) $value]);
                 }
             }
+            $flushBuffer($buf, 'model_token_embeddings', ['model_id', 'token_id', 'dim', 'value']);
+
             // Positional embeddings: one row per (position, dim).
+            $buf = [];
             foreach ($data['posEmbed'] ?? [] as $pos => $row) {
                 foreach ($row as $dim => $value) {
-                    $e = new ModelPositionalEmbeddingEntity();
-                    $e->modelId = $modelId;
-                    $e->position = (int) $pos;
-                    $e->dim = (int) $dim;
-                    $e->value = (float) $value;
-                    $this->em->persist($e);
+                    $add($buf, 'model_positional_embeddings', ['model_id', 'position', 'dim', 'value'], ['model_id' => $modelId, 'position' => (int) $pos, 'dim' => (int) $dim, 'value' => (float) $value]);
                 }
             }
+            $flushBuffer($buf, 'model_positional_embeddings', ['model_id', 'position', 'dim', 'value']);
+
             // Attention weights: one row per (layer, matrix, row, col).
+            $buf = [];
             foreach ($data['attn'] ?? [] as $layer => $attn) {
                 foreach (['wq', 'wk', 'wv', 'wo'] as $m) {
                     foreach ($attn[$m] ?? [] as $r => $row) {
                         foreach ($row as $c => $value) {
-                            $e = new ModelAttentionWeightEntity();
-                            $e->modelId = $modelId;
-                            $e->layer = (int) $layer;
-                            $e->matrix = $m;
-                            $e->row = (int) $r;
-                            $e->col = (int) $c;
-                            $e->value = (float) $value;
-                            $this->em->persist($e);
+                            $add($buf, 'model_attention_weights', ['model_id', 'layer', 'matrix', 'row', 'col', 'value'], ['model_id' => $modelId, 'layer' => (int) $layer, 'matrix' => $m, 'row' => (int) $r, 'col' => (int) $c, 'value' => (float) $value]);
                         }
                     }
                 }
             }
+            $flushBuffer($buf, 'model_attention_weights', ['model_id', 'layer', 'matrix', 'row', 'col', 'value']);
+
             // FFN weights: b1 and b2 are vectors (no col index);
             // w1 and w2 are 2D matrices.
+            $buf = [];
             foreach ($data['ffn'] ?? [] as $layer => $ffn) {
                 foreach (['w1', 'b1', 'w2', 'b2'] as $m) {
                     foreach ($ffn[$m] ?? [] as $r => $row) {
                         if (!\is_array($row)) {
-                            // Bias: one number per row, no column.
-                            $e = new ModelFfnWeightEntity();
-                            $e->modelId = $modelId;
-                            $e->layer = (int) $layer;
-                            $e->matrix = $m;
-                            $e->row = (int) $r;
-                            $e->col = 0;
-                            $e->value = (float) $row;
-                            $this->em->persist($e);
-
+                            $add($buf, 'model_ffn_weights', ['model_id', 'layer', 'matrix', 'row', 'col', 'value'], ['model_id' => $modelId, 'layer' => (int) $layer, 'matrix' => $m, 'row' => (int) $r, 'col' => 0, 'value' => (float) $row]);
                             continue;
                         }
                         foreach ($row as $c => $value) {
-                            $e = new ModelFfnWeightEntity();
-                            $e->modelId = $modelId;
-                            $e->layer = (int) $layer;
-                            $e->matrix = $m;
-                            $e->row = (int) $r;
-                            $e->col = (int) $c;
-                            $e->value = (float) $value;
-                            $this->em->persist($e);
+                            $add($buf, 'model_ffn_weights', ['model_id', 'layer', 'matrix', 'row', 'col', 'value'], ['model_id' => $modelId, 'layer' => (int) $layer, 'matrix' => $m, 'row' => (int) $r, 'col' => (int) $c, 'value' => (float) $value]);
                         }
                     }
                 }
             }
+            $flushBuffer($buf, 'model_ffn_weights', ['model_id', 'layer', 'matrix', 'row', 'col', 'value']);
+
             // LayerNorm gamma/beta: one row per (layer, dim).
+            $buf = [];
             foreach (['lnAttnGamma', 'lnAttnBeta', 'lnFfnGamma', 'lnFfnBeta'] as $which) {
                 foreach ($data[$which] ?? [] as $layer => $vec) {
                     foreach ($vec as $dim => $value) {
-                        $e = new ModelLayerNormEntity();
-                        $e->modelId = $modelId;
-                        $e->layer = (int) $layer;
-                        $e->which = $which;
-                        $e->dim = (int) $dim;
-                        $e->value = (float) $value;
-                        $this->em->persist($e);
+                        $add($buf, 'model_layer_norms', ['model_id', 'layer', 'which_kind', 'dim', 'value'], ['model_id' => $modelId, 'layer' => (int) $layer, 'which_kind' => $which, 'dim' => (int) $dim, 'value' => (float) $value]);
                     }
                 }
             }
+            $flushBuffer($buf, 'model_layer_norms', ['model_id', 'layer', 'which_kind', 'dim', 'value']);
+
             // Final projection: one row per (row, col).
+            $buf = [];
             foreach ($data['final'] ?? [] as $r => $row) {
                 foreach ($row as $c => $value) {
-                    $e = new ModelFinalProjectionEntity();
-                    $e->modelId = $modelId;
-                    $e->row = (int) $r;
-                    $e->col = (int) $c;
-                    $e->value = (float) $value;
-                    $this->em->persist($e);
+                    $add($buf, 'model_final_projection', ['model_id', 'row', 'col', 'value'], ['model_id' => $modelId, 'row' => (int) $r, 'col' => (int) $c, 'value' => (float) $value]);
                 }
             }
-            $this->em->flush();
+            $flushBuffer($buf, 'model_final_projection', ['model_id', 'row', 'col', 'value']);
         });
     }
 
@@ -222,8 +227,6 @@ final readonly class DoctrineLanguageModelRepository implements LanguageModelRep
             throw new \RuntimeException("No language model with uuid {$id->value}.");
         }
         $modelId = (int) $entity->id;
-        // We need the model config to know the right shapes for
-        // the empty matrices we'll fill in below.
         $cfg = new ModelConfig(
             $entity->dModel,
             $entity->numHeads,
@@ -233,8 +236,6 @@ final readonly class DoctrineLanguageModelRepository implements LanguageModelRep
             $entity->vocabSize,
         );
 
-        // Start with all-zeros everywhere, then fill in the
-        // saved values on top.
         $data = [
             'tokenEmbed' => $this->zeroMatrix($cfg->vocabSize, $cfg->dModel),
             'posEmbed' => $this->zeroMatrix($cfg->maxSeqLen, $cfg->dModel),
@@ -247,29 +248,40 @@ final readonly class DoctrineLanguageModelRepository implements LanguageModelRep
             'final' => $this->zeroMatrix($cfg->vocabSize, $cfg->dModel),
         ];
 
-        // Walk every "weight row" table and put the numbers back
-        // into the right slot in the nested array.
-        foreach ($this->em->getRepository(ModelTokenEmbeddingEntity::class)->findBy(['modelId' => $modelId]) as $e) {
-            $data['tokenEmbed'][$e->tokenId][$e->dim] = $e->value;
+        $conn = $this->em->getConnection();
+
+        $stmt = $conn->executeQuery('SELECT token_id, dim, value FROM model_token_embeddings WHERE model_id = ?', [$modelId]);
+        while ($r = $stmt->fetchAssociative()) {
+            $data['tokenEmbed'][(int) $r['token_id']][(int) $r['dim']] = (float) $r['value'];
         }
-        foreach ($this->em->getRepository(ModelPositionalEmbeddingEntity::class)->findBy(['modelId' => $modelId]) as $e) {
-            $data['posEmbed'][$e->position][$e->dim] = $e->value;
+
+        $stmt = $conn->executeQuery('SELECT position, dim, value FROM model_positional_embeddings WHERE model_id = ?', [$modelId]);
+        while ($r = $stmt->fetchAssociative()) {
+            $data['posEmbed'][(int) $r['position']][(int) $r['dim']] = (float) $r['value'];
         }
-        foreach ($this->em->getRepository(ModelAttentionWeightEntity::class)->findBy(['modelId' => $modelId]) as $e) {
-            $data['attn'][$e->layer][$e->matrix][$e->row][$e->col] = $e->value;
+
+        $stmt = $conn->executeQuery('SELECT layer, `matrix`, `row`, `col`, value FROM model_attention_weights WHERE model_id = ?', [$modelId]);
+        while ($r = $stmt->fetchAssociative()) {
+            $data['attn'][(int) $r['layer']][$r['matrix']][(int) $r['row']][(int) $r['col']] = (float) $r['value'];
         }
-        foreach ($this->em->getRepository(ModelFfnWeightEntity::class)->findBy(['modelId' => $modelId]) as $e) {
-            if ($e->matrix === 'b1' || $e->matrix === 'b2') {
-                $data['ffn'][$e->layer][$e->matrix][$e->row] = $e->value;
+
+        $stmt = $conn->executeQuery('SELECT layer, `matrix`, `row`, `col`, value FROM model_ffn_weights WHERE model_id = ?', [$modelId]);
+        while ($r = $stmt->fetchAssociative()) {
+            if ($r['matrix'] === 'b1' || $r['matrix'] === 'b2') {
+                $data['ffn'][(int) $r['layer']][$r['matrix']][(int) $r['row']] = (float) $r['value'];
                 continue;
             }
-            $data['ffn'][$e->layer][$e->matrix][$e->row][$e->col] = $e->value;
+            $data['ffn'][(int) $r['layer']][$r['matrix']][(int) $r['row']][(int) $r['col']] = (float) $r['value'];
         }
-        foreach ($this->em->getRepository(ModelLayerNormEntity::class)->findBy(['modelId' => $modelId]) as $e) {
-            $data[$e->which][$e->layer][$e->dim] = $e->value;
+
+        $stmt = $conn->executeQuery('SELECT layer, which_kind, dim, value FROM model_layer_norms WHERE model_id = ?', [$modelId]);
+        while ($r = $stmt->fetchAssociative()) {
+            $data[$r['which_kind']][(int) $r['layer']][(int) $r['dim']] = (float) $r['value'];
         }
-        foreach ($this->em->getRepository(ModelFinalProjectionEntity::class)->findBy(['modelId' => $modelId]) as $e) {
-            $data['final'][$e->row][$e->col] = $e->value;
+
+        $stmt = $conn->executeQuery('SELECT `row`, `col`, value FROM model_final_projection WHERE model_id = ?', [$modelId]);
+        while ($r = $stmt->fetchAssociative()) {
+            $data['final'][(int) $r['row']][(int) $r['col']] = (float) $r['value'];
         }
 
         return new Weights($data);

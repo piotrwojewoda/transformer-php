@@ -11,6 +11,7 @@
         <field name="uuid" type="string" length="36" unique="true"/>
         <field name="name" type="string" length="120"/>
         <field name="rawText" type="text" column="raw_text"/>
+        <field name="categoryUuid" type="string" column="category_uuid" length="36" nullable="true"/>
         <field name="createdAt" type="datetime_immutable" column="created_at"/>
     </entity>
 </doctrine-mapping>

@@ -85,6 +85,21 @@ final class LanguageModel extends AggregateRoot
     }
 
     /**
+     * Reset a trained model back to Ready so it can be trained again.
+     * Only valid from Trained status.
+     */
+    public function resetToReady(Clock $clock): void
+    {
+        if ($this->status !== ModelStatus::Trained) {
+            throw new \DomainException(
+                "Cannot reset to ready from status {$this->status->value}."
+            );
+        }
+        $this->status = ModelStatus::Ready;
+        $this->updatedAt = $clock->now();
+    }
+
+    /**
      * Move the model from "Ready" to "Training".
      * We can only start training a model that has finished being
      * prepared. The status guard makes that rule impossible to break.

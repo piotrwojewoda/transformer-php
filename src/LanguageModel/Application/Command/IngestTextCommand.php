@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\LanguageModel\Application\Command;
 
+use App\LanguageModel\Domain\Category\CategoryId;
 use App\LanguageModel\Domain\Corpus\CorpusId;
 
 // "Please add this text to a new corpus". The matching handler
@@ -13,6 +14,7 @@ final readonly class IngestTextCommand
     public function __construct(
         public string $name,
         public string $text,
+        public ?CategoryId $categoryId = null,
     ) {
         if (mb_strlen($name, 'UTF-8') === 0) {
             throw new \InvalidArgumentException('Corpus name cannot be empty.');

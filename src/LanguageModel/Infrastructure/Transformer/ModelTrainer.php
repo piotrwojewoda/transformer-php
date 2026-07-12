@@ -143,39 +143,83 @@ final class ModelTrainer implements \App\LanguageModel\Application\Port\TrainerP
         LanguageModel $model,
         TokenSequence $data,
         TrainingConfig $config,
+        ?array $previousAdamState = null,
     ): Weights {
         $weights = $model->weights();
         if ($weights === null) {
             throw new \RuntimeException('Model has no weights to train.');
         }
-        // T is the length of our training window. It can't be longer
-        // than the data minus one (because we need a "next" token).
         $T = min($config->seqLen, $data->length() - 1);
         if ($T < 1) {
             throw new \InvalidArgumentException('Training data too short for one sample.');
         }
-        // Pick a random starting position so we don't always train on
-        // the same slice of the corpus.
-        $start = 0;
         $rng = $this->rng ??= new RandomGenerator(42);
-        if ($data->length() > $config->seqLen + 1) {
-            $start = $rng->nextInt(0, $data->length() - $T - 1);
-        }
-        // xIds: the input tokens (positions 0..T-1).
-        // yIds: the targets (positions 1..T, i.e. shifted by one).
-        // The model is asked to predict the next character, so yIds
-        // is xIds shifted by one position.
-        $xIds = \array_slice($data->toIntArray(), $start, $T);
-        $yIds = \array_slice($data->toIntArray(), $start + 1, $T);
+        $batchSize = max(1, $config->batchSize);
+        $accumulatedGrads = null;
+        $totalLoss = 0.0;
 
-        // Make a fresh Adam (without bias correction) for this step.
+        for ($batch = 0; $batch < $batchSize; $batch++) {
+            $start = 0;
+            if ($data->length() > $config->seqLen + 1) {
+                $start = $rng->nextInt(0, $data->length() - $T - 1);
+            }
+            $xIds = \array_slice($data->toIntArray(), $start, $T);
+            $yIds = \array_slice($data->toIntArray(), $start + 1, $T);
+
+            $grads = $this->computeGradients($weights->data, $model->config, $xIds, $yIds);
+            $batchLoss = $this->lastLoss?->value ?? 0.0;
+            $totalLoss += $batchLoss;
+
+            if ($accumulatedGrads === null) {
+                $accumulatedGrads = $grads;
+            } else {
+                $accumulatedGrads = $this->addGradients($accumulatedGrads, $grads);
+            }
+        }
+
+        if ($accumulatedGrads === null) {
+            throw new \RuntimeException('No gradients accumulated.');
+        }
+
+        if ($batchSize > 1) {
+            $accumulatedGrads = $this->scaleGradients($accumulatedGrads, 1.0 / $batchSize);
+        }
+
         $adam = new Adam($config->learningRate);
-        // Compute the gradients for every weight.
-        $grads = $this->computeGradients($weights->data, $model->config, $xIds, $yIds);
-        // Apply the Adam step to get new weights.
-        $newWeights = $adam->step($weights->data, $grads);
+        if ($previousAdamState !== null) {
+            $adam->setState($previousAdamState);
+        }
+        $newWeights = $adam->step($weights->data, $accumulatedGrads);
+        $this->lastAdamState = $adam->getState();
+        $this->lastLoss = new TrainingLoss($totalLoss / $batchSize);
 
         return new Weights($newWeights);
+    }
+
+    private function addGradients(array $a, array $b): array
+    {
+        $result = [];
+        foreach ($a as $key => $value) {
+            if (\is_array($value)) {
+                $result[$key] = $this->addGradients($value, $b[$key] ?? []);
+            } else {
+                $result[$key] = (float) $value + (float) ($b[$key] ?? 0.0);
+            }
+        }
+        return $result;
+    }
+
+    private function scaleGradients(array $grads, float $scale): array
+    {
+        $result = [];
+        foreach ($grads as $key => $value) {
+            if (\is_array($value)) {
+                $result[$key] = $this->scaleGradients($value, $scale);
+            } else {
+                $result[$key] = (float) $value * $scale;
+            }
+        }
+        return $result;
     }
 
     /**
@@ -288,8 +332,8 @@ final class ModelTrainer implements \App\LanguageModel\Application\Port\TrainerP
 
         // dH = dLogits @ final  (how the hidden state should change)
         $dH = $dLogits->matmul($finalTensor);
-        // dFinal = h.T @ dLogits  (how the final projection should change)
-        $dFinal = $h->transpose()->matmul($dLogits);
+        // dFinal = dLogits.T @ h  (how the final projection should change)
+        $dFinal = $dLogits->transpose()->matmul($h);
 
         // Set up empty buckets for all the gradients we'll fill in below.
         $grads = [
@@ -354,6 +398,10 @@ final class ModelTrainer implements \App\LanguageModel\Application\Port\TrainerP
     // The loss from the most recent trainOneEpoch call. The handler
     // reads this to record the training history.
     public ?TrainingLoss $lastLoss = null;
+
+    // The Adam state after the most recent trainOneEpoch call. The
+    // handler reads this to persist it for the next epoch.
+    public ?array $lastAdamState = null;
 
     /**
      * Helper: turn a 2D PHP array (or a Tensor) into a Tensor.

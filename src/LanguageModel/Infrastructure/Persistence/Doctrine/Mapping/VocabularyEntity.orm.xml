@@ -10,6 +10,6 @@
         </id>
         <field name="corpusId" type="integer" column="corpus_id"/>
         <field name="tokenId" type="integer" column="token_id"/>
-        <field name="character" type="blob" column="character"/>
+        <field name="character" type="binary" column="`character`"/>
     </entity>
 </doctrine-mapping>

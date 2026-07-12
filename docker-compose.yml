@@ -3,7 +3,9 @@ services:
     build: ./docker/php
     volumes:
       - ./:/app
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini:ro
       - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:ro
+      - ./docker/php/memory.ini:/usr/local/etc/php/conf.d/memory.ini:ro
     ports:
       - "8080:80"
     environment:
@@ -14,6 +16,36 @@ services:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  worker-training:
+    build: ./docker/php
+    image: transformer-php-php
+    command: sh -c 'while true; do php bin/console messenger:consume async_training -v --limit=10; done'
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini:ro
+      - ./docker/php/memory.ini:/usr/local/etc/php/conf.d/memory.ini:ro
+    environment:
+      PHP_IDE_CONFIG: "serverName=transformer-app"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  worker-inference:
+    build: ./docker/php
+    image: transformer-php-php
+    command: sh -c 'while true; do php bin/console messenger:consume async_inference -v --limit=10; done'
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini:ro
+      - ./docker/php/memory.ini:/usr/local/etc/php/conf.d/memory.ini:ro
+    environment:
+      PHP_IDE_CONFIG: "serverName=transformer-app"
+    depends_on:
+      mariadb:
+        condition: service_healthy
 
   mariadb:
     image: mariadb:11.4

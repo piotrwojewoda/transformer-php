@@ -54,6 +54,7 @@ final class CreateModelType extends AbstractType
             ->add('learningRate', NumberType::class, [
                 'data' => 0.005,
                 'constraints' => [new Assert\Positive()],
+                'attr' => ['step' => 'any'],
             ])
             // totalEpochs: how many epochs to train.
             ->add('totalEpochs', IntegerType::class, [

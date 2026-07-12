@@ -83,6 +83,17 @@ final readonly class DoctrinePredictionRepository implements PredictionRepositor
     }
 
     /**
+     * @return list<Prediction>
+     */
+    public function all(): array
+    {
+        $entities = $this->em->getRepository(PredictionEntity::class)
+            ->findBy([], ['id' => 'DESC']);
+
+        return array_map(fn ($e) => $this->toDomain($e), $entities);
+    }
+
+    /**
      * Turn a database row back into a Prediction aggregate.
      */
     private function toDomain(PredictionEntity $entity): Prediction

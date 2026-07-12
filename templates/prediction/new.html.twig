@@ -1,20 +1,40 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New prediction{% endblock %}
+{% block title %}{{ 'page.new_prediction'|trans }}{% endblock %}
 
 {% block body %}
-    <h1 class="text-2xl font-bold mb-6">Generate prediction</h1>
+    <h1 class="text-2xl font-bold mb-6">{{ 'page.new_prediction'|trans }}</h1>
 
-    {{ form_start(form, {'attr': {'class': 'space-y-4 bg-white p-6 rounded shadow'}}) }}
-        {{ form_row(form.modelId) }}
-        {{ form_row(form.prompt) }}
-        <div class="grid grid-cols-3 gap-4">
-            {{ form_row(form.strategy) }}
-            {{ form_row(form.maxNewTokens) }}
-            {{ form_row(form.topK) }}
+    {{ form_start(form, {'attr': {'class': 'space-y-6 bg-white p-6 rounded-lg shadow'}}) }}
+        <div class="mb-4">
+            {{ form_label(form.modelId, 'form.label.model_id'|trans, {'tooltip': 'tooltip.model_id'}) }}
+            {{ form_widget(form.modelId, {'attr': {'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border'}}) }}
+            {{ form_errors(form.modelId) }}
         </div>
-        <div>
-            {{ form_widget(form.generate, {'attr': {'class': 'px-4 py-2 bg-blue-600 text-white rounded'}}) }}
+        <div class="mb-4">
+            {{ form_label(form.prompt, 'form.label.prompt'|trans, {'tooltip': 'tooltip.prompt'}) }}
+            {{ form_widget(form.prompt, {'attr': {'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border'}}) }}
+            {{ form_errors(form.prompt) }}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="mb-4">
+                {{ form_label(form.strategy, 'form.label.strategy'|trans, {'tooltip': 'tooltip.strategy'}) }}
+                {{ form_widget(form.strategy, {'attr': {'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border'}}) }}
+                {{ form_errors(form.strategy) }}
+            </div>
+            <div class="mb-4">
+                {{ form_label(form.maxNewTokens, 'form.label.max_new_tokens'|trans, {'tooltip': 'tooltip.max_new_tokens'}) }}
+                {{ form_widget(form.maxNewTokens, {'attr': {'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border'}}) }}
+                {{ form_errors(form.maxNewTokens) }}
+            </div>
+            <div class="mb-4">
+                {{ form_label(form.topK, 'form.label.top_k'|trans, {'tooltip': 'tooltip.top_k'}) }}
+                {{ form_widget(form.topK, {'attr': {'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border'}}) }}
+                {{ form_errors(form.topK) }}
+            </div>
+        </div>
+        <div class="pt-4">
+            {{ form_widget(form.generate, {'attr': {'class': 'w-full px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium'}, 'label': 'page.new_prediction'|trans}) }}
         </div>
     {{ form_end(form) }}
 {% endblock %}

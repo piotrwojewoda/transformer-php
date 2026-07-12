@@ -58,7 +58,7 @@ final readonly class TrainModelHandler
         // Put a message on the bus so a worker picks it up. The
         // worker will run the actual training, one epoch per
         // message (so the worker can be killed and resumed).
-        $this->commandBus->dispatch(new TrainModelMessage($job->id, $command->modelId));
+        $this->commandBus->dispatch(new TrainModelMessage($job->id, $command->modelId, $command->categoryId));
 
         return $job->id;
     }

@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'page.new_category'|trans }} — Transformer PHP{% endblock %}
+
+{% block body %}
+    <h1 class="text-2xl font-bold mb-6">{{ 'page.new_category'|trans }}</h1>
+
+    {{ form_start(form, {'attr': {'class': 'space-y-6 bg-white p-6 rounded-lg shadow'}}) }}
+        <div class="mb-4">
+            {{ form_label(form.name, 'form.label.category_name'|trans) }}
+            {{ form_widget(form.name, {'attr': {'class': 'w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-3 py-2 border'}}) }}
+            {{ form_errors(form.name) }}
+        </div>
+        <div class="pt-4">
+            {{ form_widget(form.save, {'attr': {'class': 'w-full px-4 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium'}, 'label': 'form.save'|trans}) }}
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

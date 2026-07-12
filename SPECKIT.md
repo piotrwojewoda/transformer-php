@@ -420,6 +420,7 @@ The math is pure (no I/O, no framework). It could live in Domain. We put it in I
 | `TrainingLoss` | readonly class | `float $value`. |
 | `SamplingConfig` | readonly class | `SamplingStrategy $strategy`, `int $maxNewTokens`, `?int $topK` (only when `TopK`). |
 | `ModelId, CorpusId, TrainingJobId, PredictionId` | readonly class | Uuid v7 (uses `symfony/uid`). |
+| `TrainingHistoryView` | readonly class | `jobId`, `status`, `totalEpochs`, `currentEpoch`, `lastLoss`, `points`, `startedAt`, `elapsedSeconds`, `estimatedRemainingSeconds`, `isLive`, `errorMessage`. Used both for the loss chart and the live progress bar. |
 
 ### 7.3 Domain Events
 Plain readonly classes implementing `DomainEvent`:
@@ -482,8 +483,10 @@ interface PredictionRepository {
 | `ListModelsQuery` | `ListModelsHandler` | `array<ModelView>` |
 | `GetModelQuery { ModelId }` | `GetModelHandler` | `?ModelView` (with config, status, weight summary) |
 | `GetVocabQuery { CorpusId }` | `GetVocabHandler` | `array{id: int, char: string}[]` |
-| `GetTrainingHistoryQuery { ModelId }` | `GetTrainingHistoryHandler` | `TrainingHistoryView` (loss series, status) |
+| `GetTrainingHistoryQuery { ModelId }` | `GetTrainingHistoryHandler` | `TrainingHistoryView` (loss series, status, elapsed, ETA, isLive) |
 | `GetPredictionQuery { PredictionId }` | `GetPredictionHandler` | `?PredictionView` |
+
+The `GetTrainingHistoryQuery` also powers the live training progress polling. The handler computes `elapsedSeconds` and `estimatedRemainingSeconds` from `TrainingJob::startedAt()` so the UI can show a progress bar and ETA without an extra query type.
 
 ### 8.4 Handlers — testing rules
 - Handlers depend only on the port interfaces and the message bus interface.
@@ -556,6 +559,8 @@ See section 12 for full detail. Each class lives under `src/LanguageModel/Infras
 6. If `epoch == totalEpochs`, mark job `Done`, model `Trained`, emit `ModelTrained`.
 
 The `--limit=1` flag on `messenger:consume` therefore equals "one epoch at a time".
+
+After each epoch the handler calls `recordEpoch()` and flushes the EntityManager, so the new loss point is immediately visible to the HTTP polling endpoint.
 
 #### `GeneratePredictionMessageHandler`
 1. Loads `Prediction` and `LanguageModel` (with weights).
@@ -903,6 +908,7 @@ This is intentionally simple. The table sizes are < 2 000 rows, the transaction 
 | POST | `/model/{id}/train-n-epochs` | `ModelController::trainN` | Dispatch `TrainModelCommand` for N epochs. |
 | GET, POST | `/prediction/new?model={id}` | `PredictionController::new` | Form for prompt + sampling. |
 | GET | `/prediction/{id}` | `PredictionController::show` | Result page; auto-refreshes every 1s while `status != done`. |
+| GET | `/model/{id}/training-progress` | `ModelController::trainingProgress` | Returns the training-progress partial HTML for JS polling. |
 
 ### 13.2 Templates
 - `base.html.twig` — Tailwind CDN, top nav, flash messages.
@@ -910,7 +916,8 @@ This is intentionally simple. The table sizes are < 2 000 rows, the transaction 
 - `corpus/new.html.twig` — `<textarea name="text">` + name input.
 - `model/list.html.twig` — table with name, status, last loss, actions.
 - `model/new.html.twig` — form for hyperparameters.
-- `model/detail.html.twig` — config, inline SVG loss chart, action buttons, vocab table.
+- `model/detail.html.twig` — config, inline SVG loss chart, action buttons, vocab table, live training progress bar with JS polling.
+- `model/_training_progress.html.twig` — partial rendered by the progress endpoint: progress bar, epoch counter, last loss, ETA, loss chart.
 - `prediction/new.html.twig` — prompt textarea, sampling select, max_new_tokens input.
 - `prediction/show.html.twig` — prompt, generated text, error message if failed.
 
@@ -923,6 +930,10 @@ A small `macro` reads `TrainingHistoryView` and emits a `<svg width=400 height=1
 <meta http-equiv="refresh" content="1">
 ```
 while `status != done` (Twig conditional). Zero JS.
+
+### 13.5 Training progress polling
+
+The model detail page polls `GET /model/{id}/training-progress` every 2 seconds while the job `isLive` (status `queued` or `running`). The endpoint renders only the `model/_training_progress.html.twig` partial, which inline JavaScript replaces inside the `#training-progress` container. If JavaScript is disabled, a `<noscript><meta http-equiv="refresh" content="2"></noscript>` fallback reloads the whole page every 2 seconds.
 
 ---
 
@@ -1172,6 +1183,9 @@ tests/
 │       ├── DashboardControllerTest.php
 │       ├── CorpusControllerTest.php
 │       ├── ModelControllerTest.php
+│       │   (with testTrainingProgressEndpointReturnsPartialHtml,
+│       │    testDetailPageContainsPollingScriptWhenTraining,
+│       │    testDetailPageHasNoscriptFallback)
 │       └── PredictionControllerTest.php
 ├── Fixtures/
 │   ├── CorpusFactory.php
@@ -1194,6 +1208,7 @@ tests/
 | **Doctrine repositories** | Save/load/find/delete round-trip; cascade; unique constraints; `saveWeights` is bit-identical. | Real MariaDB, transactional rollback. |
 | **Messenger handlers** | Picks the right message, loads state, calls the port, persists, advances state, re-dispatches or terminates. | Kernel boot, in-memory transport, real DB. |
 | **UI / Controllers** | Route 200, form renders, POST triggers correct command, validation errors shown, redirects, CSRF. | `WebTestCase` + Foundry. |
+| **UI / Live progress** | Progress endpoint returns partial HTML; detail page contains polling script while training; ETA calculation handles queued/running/done states. | `WebTestCase` + unit query-handler tests. |
 | **End-to-end** | Ingest → CreateModel → TrainN → Predict. Loss decreases, output non-empty, output chars all in vocab. | Full kernel, real DB, real handlers. |
 
 ### 16.5 Mandatory acceptance tests (the "if any fails, the implementation is not done" list)
@@ -1428,6 +1443,7 @@ The project is **done** when all of the following are true:
 - [ ] A user can submit a prompt; the worker generates a non-empty string composed only of vocabulary characters.
 - [ ] The loss decreases monotonically (within an epsilon) over at least 10 epochs on a deterministic 50-char corpus.
 - [ ] Killing the worker mid-training and restarting it continues from the last persisted epoch.
+- [ ] The model detail page shows a live progress bar while training, updates epoch counter, last loss and ETA automatically, and stops polling when training finishes or fails.
 
 ### 18.2 Architectural
 - [ ] `src/LanguageModel/Domain/**` contains zero `use` statements pointing to `Symfony` or `Doctrine`.

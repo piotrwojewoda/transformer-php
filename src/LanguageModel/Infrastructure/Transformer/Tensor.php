@@ -325,24 +325,28 @@ final class Tensor
                 "matmul shape mismatch: ({$this->rows}, {$this->cols}) @ ({$other->rows}, {$other->cols})."
             );
         }
-        // Make an output matrix full of zeros. We'll add to it.
-        $out = array_fill(0, $this->rows * $other->cols, 0.0);
-        for ($i = 0; $i < $this->rows; $i++) {
-            for ($k = 0; $k < $this->cols; $k++) {
-                // Pick one number from A. If it's 0, skip the work.
-                $a = $this->data[$i * $this->cols + $k];
+        $aRows = $this->rows;
+        $aCols = $this->cols;
+        $bCols = $other->cols;
+        $out = array_fill(0, $aRows * $bCols, 0.0);
+        $aData = $this->data;
+        $bData = $other->data;
+        for ($i = 0; $i < $aRows; $i++) {
+            $iOffset = $i * $aCols;
+            $outOffset = $i * $bCols;
+            for ($k = 0; $k < $aCols; $k++) {
+                $a = $aData[$iOffset + $k];
                 if ($a === 0.0) {
                     continue;
                 }
-                // Multiply by every entry in row k of B, and add to
-                // the matching output column.
-                for ($j = 0; $j < $other->cols; $j++) {
-                    $out[$i * $other->cols + $j] += $a * $other->data[$k * $other->cols + $j];
+                $kOffset = $k * $bCols;
+                for ($j = 0; $j < $bCols; $j++) {
+                    $out[$outOffset + $j] += $a * $bData[$kOffset + $j];
                 }
             }
         }
 
-        return new self($this->rows, $other->cols, $out);
+        return new self($aRows, $bCols, $out);
     }
 
     /**

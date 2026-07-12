@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository;
 
+use App\LanguageModel\Domain\Category\CategoryId;
 use App\LanguageModel\Domain\Corpus\Corpus;
 use App\LanguageModel\Domain\Corpus\CorpusId;
 use App\LanguageModel\Domain\Repository\CorpusRepository;
@@ -33,6 +34,7 @@ final readonly class DoctrineCorpusRepository implements CorpusRepository
         // Copy over the fields that might have changed.
         $entity->name = $corpus->name;
         $entity->rawText = $corpus->rawText;
+        $entity->categoryUuid = $corpus->categoryId?->value;
         // persist() queues the change, flush() writes it to the DB.
         $this->em->persist($entity);
         $this->em->flush();
@@ -52,6 +54,7 @@ final readonly class DoctrineCorpusRepository implements CorpusRepository
             $entity->name,
             $entity->rawText,
             $entity->createdAt,
+            $entity->categoryUuid !== null ? CategoryId::fromString($entity->categoryUuid) : null,
         );
     }
 
@@ -70,6 +73,28 @@ final readonly class DoctrineCorpusRepository implements CorpusRepository
                 $entity->name,
                 $entity->rawText,
                 $entity->createdAt,
+                $entity->categoryUuid !== null ? CategoryId::fromString($entity->categoryUuid) : null,
+            );
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<Corpus>
+     */
+    public function findByCategory(CategoryId $categoryId): array
+    {
+        $entities = $this->em->getRepository(CorpusEntity::class)
+            ->findBy(['categoryUuid' => $categoryId->value], ['id' => 'DESC']);
+        $out = [];
+        foreach ($entities as $entity) {
+            $out[] = new Corpus(
+                CorpusId::fromString($entity->uuid),
+                $entity->name,
+                $entity->rawText,
+                $entity->createdAt,
+                $entity->categoryUuid !== null ? CategoryId::fromString($entity->categoryUuid) : null,
             );
         }
 

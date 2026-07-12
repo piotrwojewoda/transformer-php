@@ -1,19 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app.request.locale }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Transformer PHP{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .info-tooltip:hover .info-tooltip-bubble {
+            display: block !important;
+        }
+        .info-tooltip-bubble::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: white transparent transparent transparent;
+        }
+        .info-tooltip-bubble {
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
-    <header class="bg-white shadow">
+    <header class="bg-white shadow-sm border-b border-gray-200">
         <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="{{ path('dashboard') }}" class="text-xl font-bold text-blue-600">Transformer PHP</a>
-            <nav class="flex gap-6 text-sm">
-                <a href="{{ path('dashboard') }}" class="hover:text-blue-600">Dashboard</a>
-                <a href="{{ path('corpus_new') }}" class="hover:text-blue-600">Ingest</a>
-                <a href="{{ path('model_list') }}" class="hover:text-blue-600">Models</a>
+            <a href="{{ path('dashboard') }}" class="text-xl font-bold text-blue-600 hover:text-blue-700">Transformer PHP</a>
+            <nav class="flex gap-6 text-sm items-center">
+                <a href="{{ path('dashboard') }}" class="text-gray-600 hover:text-blue-600">{{ 'nav.dashboard'|trans }}</a>
+                <a href="{{ path('corpus_new') }}" class="text-gray-600 hover:text-blue-600">{{ 'nav.ingest'|trans }}</a>
+                <a href="{{ path('category_list') }}" class="text-gray-600 hover:text-blue-600">{{ 'nav.categories'|trans }}</a>
+                <a href="{{ path('model_list') }}" class="text-gray-600 hover:text-blue-600">{{ 'nav.models'|trans }}</a>
+                <span class="ml-4 flex gap-1">
+                    <a href="{{ path('switch_language', {locale: 'en'}) }}" class="{% if app.request.locale == 'en' %}opacity-100{% else %}opacity-50 hover:opacity-75{% endif %} transition-opacity">
+                        <svg class="w-5 h-5" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="640" height="480" fill="#012169"/>
+                            <path d="M0 0l640 480M640 0L0 480" stroke="#fff" stroke-width="60"/>
+                            <path d="M0 240h640M320 0v480" stroke="#fff" stroke-width="100"/>
+                            <path d="M0 240h640M320 0v480" stroke="#c8102e" stroke-width="60"/>
+                            <path d="M-2 0l324 243M322 237L642 0M-2 480l324-243M322 243L642 480" stroke="#fff" stroke-width="30"/>
+                            <path d="M-6 0l324 246M318 234L646 0M-6 480l324-246M318 246L646 480" stroke="#c8102e" stroke-width="18"/>
+                        </svg>
+                    </a>
+                    <a href="{{ path('switch_language', {locale: 'pl'}) }}" class="{% if app.request.locale == 'pl' %}opacity-100{% else %}opacity-50 hover:opacity-75{% endif %} transition-opacity">
+                        <svg class="w-5 h-5" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="640" height="480" fill="#fff"/>
+                            <rect width="640" height="240" y="240" fill="#dc143c"/>
+                        </svg>
+                    </a>
+                </span>
             </nav>
         </div>
     </header>
@@ -21,7 +58,7 @@
     <main class="max-w-5xl mx-auto px-4 py-8">
         {% for label, messages in app.flashes %}
             {% for message in messages %}
-                <div class="mb-4 px-4 py-3 rounded bg-{{ label == 'error' ? 'red' : 'green' }}-100 border border-{{ label == 'error' ? 'red' : 'green' }}-300 text-{{ label == 'error' ? 'red' : 'green' }}-800">
+                <div class="mb-4 px-4 py-3 rounded-md border border-{{ label == 'error' ? 'red' : 'green' }}-200 bg-{{ label == 'error' ? 'red' : 'green' }}-50 text-{{ label == 'error' ? 'red' : 'green' }}-700">
                     {{ message }}
                 </div>
             {% endfor %}

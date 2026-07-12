@@ -7,10 +7,12 @@ namespace App\LanguageModel\HttpInterface\Controller;
 use App\LanguageModel\Application\Command\CreateModelCommand;
 use App\LanguageModel\Application\Command\TrainModelCommand;
 use App\LanguageModel\Application\Query\GetModelQuery;
+use App\LanguageModel\Domain\Category\CategoryId;
 use App\LanguageModel\Application\Query\GetTrainingHistoryQuery;
 use App\LanguageModel\Application\Query\ListModelsQuery;
 use App\LanguageModel\Domain\Model\ModelConfig;
 use App\LanguageModel\Domain\Model\ModelId;
+use App\LanguageModel\Domain\Repository\CategoryRepository;
 use App\LanguageModel\Domain\Training\TrainingConfig;
 use App\LanguageModel\HttpInterface\Form\CreateModelType;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -31,6 +33,7 @@ final readonly class ModelController
         private FormFactoryInterface $forms,
         private MessageBusInterface $commandBus,
         private MessageBusInterface $queryBus,
+        private CategoryRepository $categories,
     ) {
     }
 
@@ -102,6 +105,25 @@ final readonly class ModelController
         return new Response($this->twig->render('model/detail.html.twig', [
             'model' => $view,
             'history' => $history,
+            'categories' => $this->categories->all(),
+        ]));
+    }
+
+    /**
+     * Return the training progress partial (HTML fragment) so the
+     // model detail page can poll it via JS and update just the
+     // progress bar without a full page reload.
+     */
+    #[Route('/model/{id}/training-progress', name: 'model_training_progress', methods: ['GET'], requirements: ['id' => '[0-9a-f-]{36}'])]
+    public function trainingProgress(string $id): Response
+    {
+        $modelId = ModelId::fromString($id);
+        $history = $this->queryBus->dispatch(new GetTrainingHistoryQuery($modelId))
+            ->last(HandledStamp::class)
+            ->getResult();
+
+        return new Response($this->twig->render('model/_training_progress.html.twig', [
+            'history' => $history,
         ]));
     }
 
@@ -111,12 +133,14 @@ final readonly class ModelController
      // used everywhere in the demo.
      */
     #[Route('/model/{id}/train-one-epoch', name: 'model_train_one', methods: ['POST'], requirements: ['id' => '[0-9a-f-]{36}'])]
-    public function trainOneEpoch(string $id): Response
+    public function trainOneEpoch(string $id, Request $request): Response
     {
         $modelId = ModelId::fromString($id);
+        $categoryId = CategoryId::fromString((string) $request->request->get('categoryId', ''));
         $this->commandBus->dispatch(new TrainModelCommand(
             $modelId,
             new TrainingConfig(0.005, 1, 32),
+            $categoryId,
         ));
 
         return new RedirectResponse('/model/'.$id);
@@ -131,9 +155,11 @@ final readonly class ModelController
     {
         $n = max(1, (int) $request->request->get('n', 1));
         $modelId = ModelId::fromString($id);
+        $categoryId = CategoryId::fromString((string) $request->request->get('categoryId', ''));
         $this->commandBus->dispatch(new TrainModelCommand(
             $modelId,
             new TrainingConfig(0.005, $n, 32),
+            $categoryId,
         ));
 
         return new RedirectResponse('/model/'.$id);

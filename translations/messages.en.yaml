@@ -1,0 +1,132 @@
+# Navigation
+nav.dashboard: Dashboard
+nav.ingest: Ingest
+nav.categories: Categories
+nav.models: Models
+
+# Dashboard
+page.dashboard: Dashboard
+stat.corpora: Corpora
+stat.models: Models
+stat.predictions: Predictions
+section.quick_actions: Quick actions
+action.ingest_corpus: '+ Ingest a new corpus'
+action.create_model: '+ Create a new model'
+action.list_models: List existing models
+
+# Corpus
+page.corpora: Corpora
+page.ingest_corpus: Ingest a new corpus
+form.corpus_name: Corpus name
+form.text_content: Text content
+form.save: Save
+form.category.placeholder: — select a category —
+empty.corpora: No corpora yet. Ingest one to get started.
+
+# Category
+page.categories: Categories
+page.new_category: New category
+form.label.category_name: Category name
+action.new_category: '+ New category'
+empty.categories: No categories yet. Create one so you can assign corpora to it.
+
+# Form labels
+form.label.name: Name
+form.label.d_model: dModel
+form.label.num_heads: Num heads
+form.label.num_layers: Num layers
+form.label.d_ff: dFf
+form.label.max_seq_len: Max sequence length
+form.label.vocab_size: Vocabulary size
+form.label.learning_rate: Learning rate
+form.label.total_epochs: Total epochs
+form.label.seq_len: Sequence length
+form.label.model_id: Model ID
+form.label.prompt: Prompt
+form.label.strategy: Strategy
+form.label.max_new_tokens: Max new tokens
+form.label.top_k: Top K
+form.label.category: Category
+form.label.training_category: Training category
+corpus.uuid: UUID
+corpus.characters: characters
+corpus.vocab_entries: vocabulary entries
+section.vocabulary: Vocabulary
+table.id: ID
+table.char: Char
+table.hex: Hex
+section.raw_text: Raw text
+corpus.page_title: 'Corpus: %name%'
+
+# Model
+page.models: Models
+page.new_model: Create a new model
+action.new_model: '+ New model'
+empty.models: No models yet. Create one to get started.
+table.name: Name
+table.status: Status
+table.dmodel: dModel
+table.layers: Layers
+table.last_loss: Last loss
+action.view: View
+model.uuid: UUID
+model.weight_rows: weight rows
+section.configuration: Configuration
+config.status: Status
+config.dmodel: dModel
+config.num_heads: numHeads
+config.num_layers: numLayers
+config.dff: dFf
+config.max_seq_len: maxSeqLen
+config.vocab_size: vocabSize
+section.actions: Actions
+action.train_1_epoch: Train 1 epoch
+action.train_n_epochs: Train N epochs
+action.generate_prediction: Generate prediction
+section.training_history: Training history
+empty.training_history: No training has been queued for this model.
+training.epoch_info: 'Epoch %current% of %total% — last loss:'
+training.last_loss: 'Last loss'
+training.elapsed: 'Elapsed'
+training.eta: 'ETA'
+training.heading: Training
+
+# Prediction
+page.predictions: Predictions
+page.new_prediction: Generate prediction
+page.prediction: Prediction
+action.new_prediction: '+ New prediction'
+empty.predictions: No predictions yet. Generate one to get started.
+label.status: Status
+label.model: Model
+label.sampling: Sampling
+label.prompt: Prompt
+label.generated_text: Generated text
+label.error: 'Error:'
+status.generating: Generating…
+prediction.not_enough_data: Not enough data points for a chart yet.
+
+# Tooltips
+tooltip.status: 'The current life-cycle state of the model. "Created" means the model exists but has not been trained yet. "Training" means a worker is currently updating its weights. "Ready" means it has finished at least one epoch and can be used to generate text.'
+tooltip.category: 'Optional group for this corpus. Categories let you choose later which group of texts a model should train on. If you do not pick a category, the corpus will not be available for training.'
+tooltip.training_category: 'Pick the category whose texts should be used for training. The model will learn from all corpora assigned to this category (concatenated together). Without a selected category training cannot start.'
+tooltip.corpus_name: 'Give your text collection a friendly name so you can find it later. Think of it like a label on a folder — it does not affect how the model learns, it just helps you stay organized.'
+tooltip.text_content: 'Paste or type the text you want the model to learn from. This is the "textbook" the model will read over and over during training. The more text you provide (and the more interesting it is), the better the model will understand patterns, words, and grammar in that language. You can paste a whole book, articles, poems, or anything you like.'
+tooltip.name: 'Pick a memorable name for your model — for example "Shakespeare bot" or "Polish poetry". This name is only for you, so you can tell your models apart on the dashboard. It does not change how the model works.'
+tooltip.d_model: 'This is the width of every vector (numerical representation) inside the model. Imagine each word or token as a point in a big coordinate space — dModel tells you how many coordinates that point has. A bigger number means the model can store more nuance and detail about each token, but it also makes the model heavier and slower. Small values like 8 work for tiny experiments; real-world models use 512 or more.'
+tooltip.num_heads: 'Attention heads are like having multiple pairs of eyes looking at the same sentence at the same time. Each "head" can focus on a different relationship — one head might notice that "cat" goes with "sat", while another connects "the" with "mat". More heads let the model understand richer connections between words. In practice, dModel is split evenly across all heads, so if dModel is 8 and you have 4 heads, each head works with vectors of size 2.'
+tooltip.num_layers: 'A transformer layer is one complete block of processing: attention + feed-forward network + normalization. Stacking multiple layers is like reading a sentence several times, each time understanding it a little deeper. The first layer might spot simple patterns (nearby words), while deeper layers capture complex relationships (long-distance meaning). More layers = smarter model, but also more memory and time to train.'
+tooltip.d_ff: 'Inside each transformer layer there is a feed-forward neural network (FFN) — a small two-layer MLP that processes each token independently. dFf is how wide the hidden layer of that MLP is. It is usually 2× to 4× bigger than dModel, giving the model extra capacity to "think" about each token after the attention step has gathered context. Bigger dFf = more expressive model, but more parameters to store and train.'
+tooltip.max_seq_len: 'This is the maximum number of tokens (roughly: words or characters) the model can look at in a single forward pass. If your text is longer than this, it gets cut off. Think of it as the model''s short-term memory limit. A value of 32 means the model can read up to 32 tokens at once — enough for short sentences. Real models use 2048, 4096, or even more.'
+tooltip.vocab_size: 'The vocabulary is the complete set of unique tokens the model can understand and produce. Each token gets its own embedding vector. The minimum value is 4 because 3 slots are reserved for special tokens (padding, unknown, start-of-sequence). If you set this too low, the model will have to merge different characters together and lose information. A value of 64 is good for a character-level experiment.'
+tooltip.learning_rate: 'The learning rate controls how big each "step" is when the model adjusts its weights during training. Think of it like how fast you turn a steering wheel: too big and you overshoot (the loss jumps around or explodes), too small and you barely move (training takes forever). Common starting values are between 0.001 and 0.01. The Adam optimizer used here adapts this a bit automatically, but the base value still matters a lot.'
+tooltip.total_epochs: 'One epoch = the model has seen every single example in your training data once. If you set 50 epochs, the model will go through the entire text 50 times, getting a little better each pass. Too few epochs and the model has not learned enough; too many and it might "memorize" the training text instead of learning general patterns (this is called overfitting). Start with 50 and watch the loss curve.'
+tooltip.seq_len: 'During training, the long text is split into chunks of this many tokens. The model reads one chunk, tries to predict the next token at every position, calculates the error, and updates its weights. A bigger sequence length gives the model more context to learn from in each step, but uses more memory. If seqLen is 32, each training step processes a window of 32 tokens.'
+tooltip.model_id: 'Every model has a unique ID (a long code like a1b2c3d4-...). You can copy it from the model list or model detail page. This tells the system which trained model to use when generating text. Without a valid model ID, there is nothing to generate from.'
+tooltip.prompt: 'Type whatever text you want the model to continue. The model will read your prompt and try to write the next words in the same style it was trained on. For example, if you trained on Shakespeare, typing "To be or not to" might produce "be, that is the question". The prompt is the starting point — the model takes it from there.'
+tooltip.strategy: 'This is how the model picks the next token at each step:\n\n• Greedy — always picks the single most likely token. Fast and deterministic, but the output can feel repetitive and boring.\n\n• Top-K — looks at the K most likely tokens and randomly picks one among them (weighted by probability). This adds variety and surprise to the output. A K of 5 means the model considers the top 5 candidates each time.'
+tooltip.max_new_tokens: 'How many new tokens the model will generate after your prompt. Each token is roughly one character or one word-piece, depending on the tokenizer. A value of 30 will produce a short paragraph; 200 will produce a longer passage. Generating too many tokens from a small model can lead to gibberish, so start small and increase gradually.'
+tooltip.top_k: 'When using "Top-K" strategy, this sets the K — the number of most-likely candidate tokens the model considers at each step. A K of 1 is the same as greedy (only one choice). A K of 10 gives the model 10 options to pick from, making the text more varied but also more random. Typical values are 5–50. Leave empty when using Greedy strategy.'
+tooltip.train_1_epoch: 'Runs exactly one pass through the whole training text and updates the model weights once. This is useful when you want to watch the model improve step by step: train one epoch, look at the loss, then train another. It is the same as adding 1 to the "Train N epochs" field.'
+tooltip.generate_prediction: 'Opens the text generation page for this model. You can type a starting prompt (for example the first few words of a sentence) and the model will try to continue it in the style it learned from the training text.'
+tooltip.train_n: 'How many additional epochs of training to run. Each epoch means the model reads through the entire training text once. If the model is already at epoch 30 and you add 10 more, it will train until epoch 40. You can keep adding more epochs in small batches to watch the loss decrease over time — a great way to learn how training works step by step!'

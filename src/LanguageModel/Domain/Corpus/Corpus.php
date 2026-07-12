@@ -23,6 +23,7 @@ final class Corpus extends AggregateRoot
         public string $name,
         public string $rawText,
         public readonly \DateTimeImmutable $createdAt,
+        public readonly ?\App\LanguageModel\Domain\Category\CategoryId $categoryId = null,
     ) {
     }
 
@@ -31,13 +32,14 @@ final class Corpus extends AggregateRoot
      * TextIngested event so listeners (e.g. the vocabulary builder)
      * can react.
      */
-    public static function create(string $name, string $text, Clock $clock): self
+    public static function create(string $name, string $text, Clock $clock, ?\App\LanguageModel\Domain\Category\CategoryId $categoryId = null): self
     {
         $corpus = new self(
             CorpusId::create(),
             $name,
             $text,
             $clock->now(),
+            $categoryId,
         );
         $corpus->recordThat(new TextIngested($corpus->id, mb_strlen($text, 'UTF-8')));
 

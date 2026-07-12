@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'page.categories'|trans }} — Transformer PHP{% endblock %}
+
+{% block body %}
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold">{{ 'page.categories'|trans }}</h1>
+        <a href="{{ path('category_new') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium">{{ 'action.new_category'|trans }}</a>
+    </div>
+
+    {% if categories is empty %}
+        <p class="text-gray-600">{{ 'empty.categories'|trans }}</p>
+    {% else %}
+        <div class="bg-white shadow rounded-lg">
+            <table class="w-full text-sm">
+                <thead class="text-left border-b border-gray-200 bg-gray-50">
+                    <tr><th class="p-3 text-gray-600">{{ 'table.name'|trans }}</th></tr>
+                </thead>
+                <tbody>
+                {% for category in categories %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="p-3 font-medium">{{ category.name }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -28,3 +28,4 @@ WORKDIR /app
 RUN echo "ServerName transformer-app" >> /etc/apache2/apache2.conf
 COPY vhost.conf /etc/apache2/sites-available/transformer-app.conf
 RUN a2dissite 000-default && a2ensite transformer-app
+COPY php.ini /usr/local/etc/php/php.ini

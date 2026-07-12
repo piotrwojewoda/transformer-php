@@ -1,31 +1,31 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Corpus — {{ corpus.name }}{% endblock %}
+{% block title %}{{ 'corpus.page_title'|trans({name: corpus.name}) }}{% endblock %}
 
 {% block body %}
-    <h1 class="text-2xl font-bold mb-2">Corpus: {{ corpus.name }}</h1>
+    <h1 class="text-2xl font-bold mb-2">{{ 'corpus.page_title'|trans({name: corpus.name}) }}</h1>
     <p class="text-sm text-gray-600 mb-6">
-        UUID: <code>{{ corpus.id.value }}</code> · {{ corpus.length() }} characters · {{ vocab|length }} vocabulary entries
+        {{ 'corpus.uuid'|trans }}: <code>{{ corpus.id.value }}</code> · {{ corpus.length() }} {{ 'corpus.characters'|trans }} · {{ vocab|length }} {{ 'corpus.vocab_entries'|trans }}
     </p>
 
-    <div class="bg-white p-6 rounded shadow mb-6">
-        <h2 class="text-lg font-semibold mb-3">Vocabulary</h2>
+    <div class="bg-white p-6 rounded-lg shadow mb-6">
+        <h2 class="text-lg font-semibold mb-4 text-gray-800">{{ 'section.vocabulary'|trans }}</h2>
         <table class="w-full text-sm">
-            <thead><tr class="text-left border-b"><th class="py-1">ID</th><th class="py-1">Char</th><th class="py-1">Hex</th></tr></thead>
+            <thead><tr class="text-left border-b border-gray-200"><th class="py-2 text-gray-600">{{ 'table.id'|trans }}</th><th class="py-2 text-gray-600">{{ 'table.char'|trans }}</th><th class="py-2 text-gray-600">{{ 'table.hex'|trans }}</th></tr></thead>
             <tbody>
             {% for entry in vocab %}
-                <tr class="border-b">
-                    <td class="py-1">{{ entry.id }}</td>
-                    <td class="py-1 font-mono">{{ entry.char == '' ? '␀' : entry.char }}</td>
-                    <td class="py-1 text-gray-500 text-xs">U+{{ '%04X'|format(entry.char|length > 0 ? (entry.char|length == 0 ? 0 : 0) : 0) }}</td>
+                <tr class="border-b border-gray-100">
+                    <td class="py-2">{{ entry.id }}</td>
+                    <td class="py-2 font-mono">{{ entry.char == '' ? '␀' : entry.char }}</td>
+                    <td class="py-2 text-gray-500 text-xs">U+{{ '%04X'|format(entry.char|length > 0 ? (entry.char|length == 0 ? 0 : 0) : 0) }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <div class="bg-white p-6 rounded shadow">
-        <h2 class="text-lg font-semibold mb-3">Raw text</h2>
-        <pre class="text-xs whitespace-pre-wrap break-words max-h-64 overflow-auto">{{ corpus.rawText }}</pre>
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-4 text-gray-800">{{ 'section.raw_text'|trans }}</h2>
+        <pre class="text-xs whitespace-pre-wrap break-words max-h-64 overflow-auto bg-gray-50 p-3 rounded">{{ corpus.rawText }}</pre>
     </div>
 {% endblock %}

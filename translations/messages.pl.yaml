@@ -1,0 +1,132 @@
+# Navigation
+nav.dashboard: Kokpit
+nav.ingest: Wczytaj
+nav.categories: Kategorie
+nav.models: Modele
+
+# Dashboard
+page.dashboard: Kokpit
+stat.corpora: Zbiory tekstów
+stat.models: Modele
+stat.predictions: Wygenerowane teksty
+section.quick_actions: Szybkie akcje
+action.ingest_corpus: '+ Dodaj nowy zbiór tekstów'
+action.create_model: '+ Utwórz nowy model'
+action.list_models: Lista istniejących modeli
+
+# Corpus
+page.corpora: Zbiory tekstów
+page.ingest_corpus: Dodaj nowy zbiór tekstów
+form.corpus_name: Nazwa zbioru tekstów
+form.text_content: Treść tekstowa
+form.save: Zapisz
+form.category.placeholder: — wybierz kategorię —
+empty.corpora: Nie ma jeszcze żadnych zbiorów tekstów. Dodaj pierwszy, aby zacząć.
+
+# Category
+page.categories: Kategorie
+page.new_category: Nowa kategoria
+form.label.category_name: Nazwa kategorii
+action.new_category: '+ Nowa kategoria'
+empty.categories: Nie ma jeszcze żadnych kategorii. Utwórz pierwszą, aby móc przypisywać do niej zbiory tekstów.
+
+# Form labels
+form.label.name: Nazwa
+form.label.d_model: dModel
+form.label.num_heads: Liczba głów
+form.label.num_layers: Liczba warstw
+form.label.d_ff: dFf
+form.label.max_seq_len: Maks. długość sekwencji
+form.label.vocab_size: Rozmiar słownika
+form.label.learning_rate: Współczynnik uczenia
+form.label.total_epochs: Liczba epok
+form.label.seq_len: Długość sekwencji
+form.label.model_id: ID modelu
+form.label.prompt: Prompt
+form.label.strategy: Strategia
+form.label.max_new_tokens: Maks. nowych tokenów
+form.label.top_k: Top K
+form.label.category: Kategoria
+form.label.training_category: Kategoria treningowa
+corpus.uuid: UUID
+corpus.characters: znaków
+corpus.vocab_entries: wpisów słownika
+section.vocabulary: Słownik
+table.id: ID
+table.char: Znak
+table.hex: Hex
+section.raw_text: Surowy tekst
+corpus.page_title: 'Zbiór tekstów: %name%'
+
+# Model
+page.models: Modele
+page.new_model: Utwórz nowy model
+action.new_model: '+ Nowy model'
+empty.models: Brak modeli. Utwórz pierwszy, aby rozpocząć.
+table.name: Nazwa
+table.status: Status
+table.dmodel: dModel
+table.layers: Warstwy
+table.last_loss: Ostatni błąd
+action.view: Podgląd
+model.uuid: UUID
+model.weight_rows: wag
+section.configuration: Konfiguracja
+config.status: Status
+config.dmodel: dModel
+config.num_heads: numHeads
+config.num_layers: numLayers
+config.dff: dFf
+config.max_seq_len: maxSeqLen
+config.vocab_size: vocabSize
+section.actions: Akcje
+action.train_1_epoch: Trenuj 1 epokę
+action.train_n_epochs: Trenuj N epok
+action.generate_prediction: Generuj predykcję
+section.training_history: Historia treningu
+empty.training_history: Dla tego modelu nie zaplanowano jeszcze treningu.
+training.epoch_info: 'Epoka %current% z %total% — ostatni błąd:'
+training.last_loss: 'Ostatni błąd'
+training.elapsed: 'Czas od startu'
+training.eta: 'Szacowany czas pozostały'
+training.heading: Trening
+
+# Prediction
+page.predictions: Wygenerowane teksty
+page.new_prediction: Generuj predykcję
+page.prediction: Predykcja
+action.new_prediction: '+ Nowy tekst'
+empty.predictions: Nie ma jeszcze żadnych wygenerowanych tekstów. Wygeneruj pierwszy, aby zacząć.
+label.status: Status
+label.model: Model
+label.sampling: Metoda losowania
+label.prompt: Prompt
+label.generated_text: Wygenerowany tekst
+label.error: 'Błąd:'
+status.generating: Generowanie…
+prediction.not_enough_data: Za mało danych, aby wyświetlić wykres.
+
+# Tooltips
+tooltip.status: 'Aktualny etap życia modelu. „Utworzony" oznacza, że model istnieje, ale jeszcze nie był trenowany. „Trenowany" oznacza, że worker właśnie aktualizuje jego wagi. „Gotowy" oznacza, że model przeszedł przynajmniej jedną epokę i można z niego generować tekst.'
+tooltip.category: 'Opcjonalna grupa, do której przypisujesz ten zbiór tekstów. Dzięki kategoriom możesz później wybrać, na jakiej grupie tekstów model ma się uczyć. Jeśli nie wybierzesz kategorii, zbiór nie będzie widoczny podczas treningu.'
+tooltip.training_category: 'Wybierz kategorię, której teksty mają posłużyć do treningu. Model nauczy się na wszystkich zbiorach tekstów przypisanych do tej kategorii (połączonych razem). Bez wyboru kategorii trening nie może się rozpocząć.'
+tooltip.corpus_name: 'Nadaj swojej kolekcji tekstów przyjazną nazwę, żebyś mógł ją potem łatwo znaleźć. To jak etykieta na segregatorze — nie wpływa na to, jak model się uczy, tylko pomaga Ci się zorganizować.'
+tooltip.text_content: 'Wklej lub wpisz tekst, z którego model ma się uczyć. To będzie jego podręcznik — przeczyta go wielokrotnie podczas treningu. Im więcej ciekawego tekstu podasz, tym lepiej model załapie wzorce, słowa i sposób pisania w danym języku. Możesz użyć fragmentu książki, artykułów, wierszy, dialogów — dowolnego tekstu, który ma sens jako całość.'
+tooltip.name: 'Wymyśl zapamiętywalną nazwę dla swojego modelu — na przykład "Bot Szekspira" albo "Polska poezja". Nazwa jest tylko dla Ciebie, żebyś mógł odróżniać modele na panelu głównym. Nie wpływa na to, jak model działa.'
+tooltip.d_model: 'To liczba wartości liczbowych, które model zapamiętuje o każdym znaku lub fragmencie słowa podczas pracy. Możesz to sobie wyobrazić jako to, ile szczegółów model pamięta na raz o danym elemencie tekstu. Im większa liczba, tym więcej subtelności może uchwycić, ale też dłużej się uczy i więcej pamięci zużywa. Dla małych eksperymentów wystarczy 8; duże modele językowe używają 512 lub więcej.'
+tooltip.num_heads: 'To liczba niezależnych sposobów, w jakie model patrzy na jedno zdanie naraz. Wyobraź sobie, że czytasz zdanie kilkoma parami oczu jednocześnie: jedna para zauważa, które słowo pasuje do czasownika, inna szuka przymiotników przy rzeczowniku. Więcej takich "par oczu" pomaga modelowi lepiej rozumieć związki między słowami. Wartość dModel jest dzielona między te głowy, więc jeśli dModel to 8, a głowy to 4, każda patrzy na 2 wartości naraz.'
+tooltip.num_layers: 'To liczba kolejnych etapów przetwarzania tekstu. Każda warstwa to jedno przejście: model najpierw patrzy na związki między słowami, a potem dodatkowo przetwarza każde słowo osobno. Układanie warstw na sobie to jak czytanie tekstu wielokrotnie — za pierwszym razem rozumiesz pojedyncze słowa, za kolejnym całe zdania, a później ukryte znaczenie. Więcej warstw czyni model bystrzejszym, ale trening trwa dłużej i zużywa więcej pamięci.'
+tooltip.d_ff: 'To rozmiar wewnętrznej sieci w każdej warstwie, która przetwarza każdy element tekstu osobno, po tym jak model już zobaczył kontekst zdania. Możesz to porównać do małego "mózgu" w każdej warstwie, który myśli nad każdym słowem z osobna. Zwykle ustawia się to 2–4 razy większe niż dModel. Większa wartość pozwala modelowi lepiej wyrażać to, co wie, ale jednocześnie powiększa model i wydłuża trening.'
+tooltip.max_seq_len: 'To maksymalna liczba znaków lub fragmentów słów, które model może zobaczyć naraz. Jeśli wpiszesz dłuższy tekst, zostanie on skrócony. Pomyśl o tym jak o liczbie słów, które model może mieć jednocześnie "przed oczami". Wartość 32 wystarczy na krótkie zdania. Duże modele potrafią naraz czytać tysiące elementów, ale dla eksperymentów wystarczy mniej.'
+tooltip.vocab_size: 'To liczba różnych znaków lub fragmentów słów, które model zna i może wykorzystać. Każdy z nich ma przypisany swój własny kod liczbowy. Model musi też zarezerwować 3 miejsca na specjalne znaczniki: oznaczenie pustego miejsca, nieznanego znaku i początku tekstu. Dlatego minimalna wartość to 4. Jeśli ustawisz za mało, model będzie zmuszony łączyć różne znaki w jeden i straci część informacji. Dla eksperymentu na poziomie pojedynczych znaków dobra wartość to 64.'
+tooltip.learning_rate: 'To wielkość pojedynczej poprawki, jaką model wprowadza podczas uczenia. Wyobraź sobie, że model jedzie samochodem do celu i skręca kierownicą: zbyt gwałtowny skręt spowoduje, że przejedzie za daleko i będzie musiał wracać, a zbyt delikatny skręt oznacza, że do celu dojedzie bardzo długo. Dlatego wartość musi być odpowiednio dobrana. Typowe wartości to od 0.001 do 0.01. Tutaj używany jest optymalizator Adam, który trochę sam dostosowuje tempo uczenia, ale wartość początkowa wciąż ma duże znaczenie.'
+tooltip.total_epochs: 'To liczba pełnych przejść modelu przez cały tekst treningowy. Jedna epoka oznacza, że model przeczytał wszystko raz. Jeśli ustawisz 50 epok, model przejdzie przez materiał 50 razy, za każdym razem ucząc się czegoś nowego. Za mało epok sprawi, że model się nie nauczy; za dużo może spowodować, że nauczy się tekstu na pamięć zamiast ogólnych zasad (to się nazywa przeuczenie). Dobrym początkiem jest 50 epok — obserwuj wykres błędu, żeby ocenić postępy.'
+tooltip.seq_len: 'To długość pojedynczego fragmentu tekstu, na którym model uczy się w jednym kroku. Długi tekst dzielimy na mniejsze kawałki o tej liczbie znaków lub fragmentów słów. Model czyta taki fragment, próbuje zgadnąć, co powinno być dalej, sprawdza swoje odpowiedzi i poprawia błędy. Dłuższy fragment daje modelowi więcej kontekstu, ale wymaga też więcej pamięci. Jeśli seqLen wynosi 32, model uczy się na odcinkach długości 32 elementów.'
+tooltip.model_id: 'Każdy model ma unikalne ID (długi kod jak a1b2c3d4-...). Możesz je skopiować z listy modeli lub strony szczegółów modelu. To mówi systemowi, który wytrenowany model użyć do generowania tekstu. Bez prawidłowego model ID nie ma z czego generować.'
+tooltip.prompt: 'Wpisz tekst, który chcesz, aby model kontynuował. Model przeczyta Twój prompt i spróbuje napisać kolejne słowa w tym samym stylu, w jakim był trenowany. Na przykład, jeśli trenowałeś na Szekspirze, wpisanie "Być albo nie być" może wyprodukować "oto jest pytanie". Prompt to punkt startowy — model zabiera stamtąd.'
+tooltip.strategy: 'To metoda, według której model dobiera kolejne słowo lub znak podczas generowania tekstu:\n\n• Greedy (chciwa) — model zawsze wybiera to, co uznał za najbardziej prawdopodobne. Wynik jest szybki i przewidywalny, ale często monotonny i powtarzalny.\n\n• Top-K — model patrzy na K najbardziej prawdopodobnych kolejnych elementów i losuje jeden z nich, biorąc pod uwagę ich szanse. To sprawia, że tekst staje się bardziej różnorodny i zaskakujący. Jeśli K = 5, model za każdym razem wybiera spośród 5 kandydatów.'
+tooltip.max_new_tokens: 'To liczba nowych znaków lub fragmentów słów, które model dopisze po Twoim prompcie. Wartość 30 da krótki akapit, a 200 — dłuższy fragment. Pamiętaj, że mały model szybko może zacząć produkować bezsensowny tekst, jeśli poprosisz go o zbyt wiele. Najlepiej zacząć od niewielkiej liczby, na przykład 30, i stopniowo zwiększać, gdy zobaczysz dobre wyniki.'
+tooltip.top_k: 'To liczba najbardziej prawdopodobnych kolejnych elementów, spośród których model losuje przy strategii Top-K. Jeśli K = 1, model wybiera zawsze to samo, czyli działa jak strategia Greedy. Jeśli K = 10, model ma do dyspozycji 10 opcji, co czyni tekst ciekawszym, ale też bardziej nieprzewidywalnym. Najczęściej używa się wartości od 5 do 50. To pole zostaw puste, gdy wybrałeś strategię Greedy.'
+tooltip.train_1_epoch: 'Uruchamia dokładnie jedno pełne przejście przez cały tekst treningowy i jednokrotnie poprawia wagi modelu. To przydatne, gdy chcesz obserwować naukę krok po kroku: wytrenuj jedną epokę, sprawdź błąd, a potem trenuj kolejną. Działa tak samo, jak wpisanie 1 w pole "Trenuj N epok".'
+tooltip.generate_prediction: 'Otwiera stronę generowania tekstu dla tego modelu. Możesz wpisać początkowy fragment (na przykład pierwsze słowa zdania), a model spróbuje kontynuować go w stylu nauczonym z tekstu treningowego.'
+tooltip.train_n: 'To ile dodatkowych pełnych przejść przez tekst treningowy chcesz wykonać. Każda epoka to jedno przeczytanie całości materiału. Jeśli model skończył już epokę 30, a dodasz 10, będzie trenował do epoki 40. Warto dodawać epoki małymi krokami i obserwować, czy błąd na wykresie maleje — to najlepszy sposób, żeby zobaczyć, jak model uczy się na Twoich danych.'

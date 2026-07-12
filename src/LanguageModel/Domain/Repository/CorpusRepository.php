@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\LanguageModel\Domain\Repository;
 
+use App\LanguageModel\Domain\Category\CategoryId;
 use App\LanguageModel\Domain\Corpus\Corpus;
 use App\LanguageModel\Domain\Corpus\CorpusId;
 
@@ -33,4 +34,11 @@ interface CorpusRepository
      * @return list<Corpus>
      */
     public function all(): array;
+
+    /**
+     * Get every corpus belonging to the given category, newest first.
+     *
+     * @return list<Corpus>
+     */
+    public function findByCategory(CategoryId $categoryId): array;
 }

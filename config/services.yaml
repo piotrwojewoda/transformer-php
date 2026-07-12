@@ -57,6 +57,9 @@ services:
     App\LanguageModel\Domain\Repository\AdamStateRepository:
         alias: App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository\DoctrineAdamStateRepository
 
+    App\LanguageModel\Domain\Repository\CategoryRepository:
+        alias: App\LanguageModel\Infrastructure\Persistence\Doctrine\Repository\DoctrineCategoryRepository
+
     App\LanguageModel\Infrastructure\Transformer\RandomGenerator:
         arguments:
             $seed: 42

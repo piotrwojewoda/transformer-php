@@ -1,0 +1,56 @@
+<div data-live="{{ history is not null and history.isLive ? '1' : '0' }}">
+    {% if history is null %}
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-lg font-semibold mb-4 text-gray-800">{{ 'section.training_history'|trans }}</h2>
+            <p class="text-gray-600 text-sm">{{ 'empty.training_history'|trans }}</p>
+        </div>
+    {% else %}
+        <div class="rounded-lg shadow {{ history.isLive ? 'bg-yellow-50 border-l-4 border-yellow-400' : 'bg-white' }} p-6 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-semibold {{ history.isLive ? 'text-yellow-900' : 'text-gray-800' }}">
+                    {{ 'section.training_history'|trans }}
+                </h2>
+                <span class="px-3 py-1 rounded text-sm font-medium
+                    {{ history.status == 'running' ? 'bg-blue-100 text-blue-800' : '' }}
+                    {{ history.status == 'queued' ? 'bg-yellow-100 text-yellow-800' : '' }}
+                    {{ history.status == 'done' ? 'bg-green-100 text-green-800' : '' }}
+                    {{ history.status == 'failed' ? 'bg-red-100 text-red-800' : '' }}">
+                    {{ history.status|upper }}
+                </span>
+            </div>
+
+            {% if history.isLive %}
+            <div class="mb-4">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="font-medium text-yellow-900">{{ 'training.epoch_info'|trans({current: history.currentEpoch, total: history.totalEpochs}) }}</span>
+                    <span class="text-yellow-700">{{ (history.totalEpochs > 0 ? (history.currentEpoch / history.totalEpochs * 100) : 0)|number_format(0) }}%</span>
+                </div>
+                <div class="w-full bg-yellow-200 rounded-full h-3">
+                    <div class="bg-yellow-500 h-3 rounded-full transition-all duration-500"
+                         style="width: {{ history.totalEpochs > 0 ? (history.currentEpoch / history.totalEpochs * 100) : 0 }}%"></div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="text-sm space-y-1.5 {{ history.isLive ? 'text-yellow-800' : 'text-gray-600' }}">
+                <p>{{ 'training.last_loss'|trans }}: <strong>{{ history.lastLoss is not null ? history.lastLoss|number_format(4) : '—' }}</strong></p>
+                {% if history.elapsedSeconds is not null %}
+                    <p>{{ 'training.elapsed'|trans }}: {{ history.elapsedSeconds|number_format(0) }}s</p>
+                {% endif %}
+                {% if history.estimatedRemainingSeconds is not null %}
+                    <p>{{ 'training.eta'|trans }}: ~{{ history.estimatedRemainingSeconds|number_format(0) }}s</p>
+                {% endif %}
+                {% if history.errorMessage is defined and history.errorMessage is not null %}
+                    <p class="text-red-700">{{ 'label.error'|trans }}: {{ history.errorMessage }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if history.points|length > 0 %}
+        <div class="bg-white p-6 rounded-lg shadow">
+            {% import 'macros/loss_chart.html.twig' as lossChart %}
+            {{ lossChart.sparkline(history.points, 400, 120) }}
+        </div>
+        {% endif %}
+    {% endif %}
+</div>

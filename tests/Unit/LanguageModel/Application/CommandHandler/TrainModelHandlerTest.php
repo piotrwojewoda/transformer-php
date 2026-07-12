@@ -6,6 +6,7 @@ namespace App\Tests\Unit\LanguageModel\Application\CommandHandler;
 
 use App\LanguageModel\Application\Command\TrainModelCommand;
 use App\LanguageModel\Application\CommandHandler\TrainModelHandler;
+use App\LanguageModel\Domain\Category\CategoryId;
 use App\LanguageModel\Domain\Model\LanguageModel;
 use App\LanguageModel\Domain\Model\ModelConfig;
 use App\LanguageModel\Domain\Model\ModelId;
@@ -38,7 +39,7 @@ final class TrainModelHandlerTest extends TestCase
 
         $handler = new TrainModelHandler($models, $jobs, $clock, $events, $bus);
         $this->expectException(\RuntimeException::class);
-        $handler(new TrainModelCommand(ModelId::create(), new TrainingConfig(0.005, 10, 32)));
+        $handler(new TrainModelCommand(ModelId::create(), new TrainingConfig(0.005, 10, 32), CategoryId::create()));
     }
 
     public function testHandle_createsJobAndDispatchesMessage(): void
@@ -62,7 +63,7 @@ final class TrainModelHandlerTest extends TestCase
             });
 
         $handler = new TrainModelHandler($models, $jobs, $clock, $events, $bus);
-        $id = $handler(new TrainModelCommand($model->id, new TrainingConfig(0.005, 10, 32)));
+        $id = $handler(new TrainModelCommand($model->id, new TrainingConfig(0.005, 10, 32), CategoryId::create()));
         $this->assertInstanceOf(TrainingJobId::class, $id);
     }
 }

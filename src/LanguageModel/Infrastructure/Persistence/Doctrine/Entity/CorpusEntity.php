@@ -13,6 +13,7 @@ class CorpusEntity
     public string $name = '';
     // The actual text. Could be big; we use LONGTEXT in the DB.
     public string $rawText = '';
+    public ?string $categoryUuid = null;
     public \DateTimeImmutable $createdAt;
 
     public function __construct()

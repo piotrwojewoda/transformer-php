@@ -33,7 +33,7 @@ final readonly class IngestTextHandler
     {
         // 1. Create the corpus aggregate. This records a
         //    TextIngested event.
-        $corpus = Corpus::create($command->name, $command->text, $this->clock);
+        $corpus = Corpus::create($command->name, $command->text, $this->clock, $command->categoryId);
         $this->corpora->save($corpus);
 
         // 2. Build a vocabulary by walking through every unique
